@@ -141,9 +141,9 @@ def main(args):
 
     freqtum, covtum, muttum = div_cov(mutcells_LR, covcells_LR, 'Tumor')
 
-    freqtum.to_csv('VAF_sparse_matrix.tsv'sep='\t')
-    covtum.to_csv('VAF_sparse_matrix.tsv'sep='\t')
-    muttum.to_csv('VAF_sparse_matrix.tsv'sep='\t')
+    freqtum.to_csv('VAF_sparse_matrix.tsv',sep='\t')
+    covtum.to_csv('Coverage_sparse_matrix.tsv',sep='\t')
+    muttum.to_csv('Variant_sparse_matrix.tsv',sep='\t')
     
 def parse_args():
     parser = argparse.ArgumentParser(
