@@ -89,11 +89,11 @@ def count_bases(sam_tum,mchr,mut_pos,celltypes,alt_base,mutcells, covcells,idx):
 
         covcells[CELL][idx]+=1
         if base == alt_base:
-            mutcells['Tumor'][CELL][idx]+=1
+            mutcells[CELL][idx]+=1
 
     return mutcells, covcells
 
-def div_cov(mutcells, covcells, smpl):
+def div_cov(mutcells, covcells):
     cov = pd.DataFrame(covcells)
     mut = pd.DataFrame(mutcells)
     freq = (mut/cov).replace(np.inf, -1)
@@ -139,7 +139,7 @@ def main(args):
             sam_tum_LR,mchr,mut_pos,celltypes,alt_base, 
             mutcells_LR, covcells_LR,index)
 
-    freqtum, covtum, muttum = div_cov(mutcells_LR, covcells_LR, 'Tumor')
+    freqtum, covtum, muttum = div_cov(mutcells_LR, covcells_LR)
 
     freqtum.to_csv('VAF_sparse_matrix.tsv',sep='\t')
     covtum.to_csv('Coverage_sparse_matrix.tsv',sep='\t')
