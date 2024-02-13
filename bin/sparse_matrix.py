@@ -135,13 +135,15 @@ def main(args):
         mut_pos = mut['POS']
 
         #Tum LR scRNA
-        cell_info, mutcells_LR, covcells_LR =count_bases(
+        mutcells_LR, covcells_LR =count_bases(
             sam_tum_LR,mchr,mut_pos,celltypes,alt_base, 
             mutcells_LR, covcells_LR,index)
 
     freqtum, covtum, muttum = div_cov(mutcells_LR, covcells_LR, 'Tumor')
 
-    
+    freqtum.to_csv('VAF_sparse_matrix.tsv'sep='\t')
+    covtum.to_csv('VAF_sparse_matrix.tsv'sep='\t')
+    muttum.to_csv('VAF_sparse_matrix.tsv'sep='\t')
     
 def parse_args():
     parser = argparse.ArgumentParser(
