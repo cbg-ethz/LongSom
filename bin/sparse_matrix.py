@@ -102,7 +102,7 @@ def div_cov(mutcells, covcells):
 
 
 def main(args):
-
+    print('start')
     names = ['#CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT','SPL']
     muts = pd.read_csv(args.tum_vcf, comment='#', delim_whitespace=True,
              header=None, names=names, compression='gzip', encoding = "ISO-8859-1")
@@ -144,6 +144,7 @@ def main(args):
     freqtum.to_csv('VAF_sparse_matrix.tsv',sep='\t')
     covtum.to_csv('Coverage_sparse_matrix.tsv',sep='\t')
     muttum.to_csv('Variant_sparse_matrix.tsv',sep='\t')
+    print('end')
     
 def parse_args():
     parser = argparse.ArgumentParser(
