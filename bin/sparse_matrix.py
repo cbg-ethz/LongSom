@@ -121,8 +121,8 @@ def main(args):
     ### PREPARING EMPTY SPARSE MATRICES (one coverage one mutated)
     muts['INDEX'] = muts['#CHROM'] + ':' + muts['POS'].astype(str) + ':' + muts['ALT'] 
     muts.set_index('INDEX', inplace=True)
-    covcells_LR = {j:{i:0 for i in muts['INDEX']} for j in barcodes}
-    mutcells_LR = {j:{i:0 for i in muts['INDEX']} for j in barcodes}
+    covcells_LR = {j:{i:0 for i in muts.index} for j in barcodes}
+    mutcells_LR = {j:{i:0 for i in muts.index} for j in barcodes}
 
     ###LOADING BAM
     sam_tum_LR = pysam.AlignmentFile(args.bam_tum_LR, "rb", threads=args.cpu)
