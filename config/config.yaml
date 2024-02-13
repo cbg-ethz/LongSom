@@ -1,0 +1,21 @@
+BnpC:
+  mcmc_steps: 2000
+  suffix: _finalcut_2k
+  missdata: ''
+  cup: 0
+  eup: 1e-9
+  FP: -1
+  FN: -1
+  estimator: 'posterior'
+  dpa:
+    B486: [1,1]
+    B497: [1,1]
+    B500: [1,1]
+filters:
+  script: germline2
+  mincells: 20
+  minalt: 5
+  maxmuts: 300
+  B486: 'B486_blacklist.txt'
+  B497: 'None'
+  B500: 'None'
