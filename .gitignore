@@ -1,0 +1,6 @@
+### LongSom ###
+#launch.json folder
+.vscode/
+
+#snakemake logs folder
+logs/

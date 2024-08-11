@@ -1,0 +1,20 @@
+Using profile profile_simple/ for setting default command line arguments.
+Building DAG of jobs...
+LockException:
+Error: Directory cannot be locked. Please make sure that no other Snakemake process is trying to create the same files in the following directory:
+/cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/SComatic/snakemake
+If you are sure that no other instances of snakemake are running on this directory, the remaining lock was likely caused by a kill signal or a power loss. It can be removed with the --unlock argument.
+[Sun Aug 11 21:09:11 2024]
+Error in rule BetaBinEstimation_scDNACalling:
+    jobid: 1
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/scDNACalling/BaseCellCounter/BaseCellCounter_files.txt
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/scDNACalling/BetaBinEstimates.txt
+    conda-env: rpy2
+    shell:
+        python /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/SComatic/scripts/BetaBinEstimation/BetaBinEstimation.py --in_tsv /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/scDNACalling/BaseCellCounter/BaseCellCounter_files.txt --outfile /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/scDNACalling/BetaBinEstimates.txt
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+    cluster_jobid: 4543079
+
+Error executing rule BetaBinEstimation_scDNACalling on cluster (jobid: 1, external: 4543079, jobscript: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/SComatic/snakemake/.snakemake/tmp.br8r4qri/snakejob.BetaBinEstimation_scDNACalling.1.sh). For error details see the cluster log and the log files of the involved rule(s).
+Exiting because a job execution failed. Look above for error message
+Complete log: .snakemake/log/2024-08-11T185256.413297.snakemake.log
