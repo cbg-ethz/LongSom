@@ -132,6 +132,15 @@ def betabin_estimation(CCounts):
 	Ref_BC = [int(x[3]) for x in CCounts]
 	print(Counter(Ref_BC))
 
+	# Estimation for base counts
+	PARAMS2 = BETABIN_params(robjects.IntVector(Alt_BC), robjects.IntVector(Ref_BC))
+	alpha2 = float(tuple(PARAMS2)[0])
+	beta2 = float(tuple(PARAMS2)[1])
+	print ('\n- Beta-binomial estimation finished for base counts:')
+	print ('  > Alpha 2 (BC):', str(alpha2))
+	print ('  > Beta 2 (BC):', str(beta2))
+
+
 	# Estimation for cell counts
 	PARAMS = BETABIN_params(robjects.IntVector(Alt_CC), robjects.IntVector(Ref_CC))
 	alpha1 = float(tuple(PARAMS)[0])
@@ -139,14 +148,6 @@ def betabin_estimation(CCounts):
 	print ('\n- Beta-binomial estimation finished for cell counts:')
 	print ('  > Alpha 1 (CC):', str(alpha1))
 	print ('  > Beta 1 (CC):', str(beta1))
-
-	# Estimation for cell counts
-	PARAMS2 = BETABIN_params(robjects.IntVector(Alt_BC), robjects.IntVector(Ref_BC))
-	alpha2 = float(tuple(PARAMS2)[0])
-	beta2 = float(tuple(PARAMS2)[1])
-	print ('\n- Beta-binomial estimation finished for base counts:')
-	print ('  > Alpha 2 (BC):', str(alpha2))
-	print ('  > Beta 2 (BC):', str(beta2))
 
 	return(alpha1,beta1,alpha2,beta2)
 

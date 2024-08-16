@@ -46,8 +46,6 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,mi
 		# Applying deltaVAF and deltaCCF filters
 		chrm_df['FINAL_FILTER'] = chrm_df.apply(lambda x: 
 			chrM_filtering(x['Cell_types'],x['Dp'],x['VAF'], x['CCF'],deltaVAF,deltaCCF,cancer), axis=1)
-		#Only keep one ALT base in case it's duplicated 
-		input_df['ALT'] = input_df['ALT'].str.split(',').str[0]
 	
 	#Filter mutations found in cancer cells
 	input_df = input_df[input_df['Cell_types'] == cancer]
@@ -61,6 +59,9 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,mi
 	#Special case for chrM due to contaminants:
 	if chrM_conta == 'True':
 		input_df = pd.concat([input_df,chrm_df])
+
+	#Only keep one ALT base in case it's duplicated 
+	input_df['ALT'] = input_df['ALT'].str.split(',').str[0]
 
 	input_df.to_csv(out_prefix+ '.calling.step3.unfiltered.tsv', sep='\t', index=False,  mode='a')
 
@@ -120,7 +121,8 @@ def chrM_filtering(CTYPES,DP,VAF,CCF,deltaVAFmin,deltaCCFmin,cancer):
 			return 'PASS'
 	
 def tag_clustered_SNVs(df, clust_dist):
-	idx = df['INDEX']
+	df2 = df[df['FILTER'].isin(['PASS','Clustered'])]
+	idx = df2['INDEX']
 	a=[]
 	for i in idx:
 		chr,pos,base=i.split(':')
@@ -137,8 +139,10 @@ def tag_clustered_SNVs(df, clust_dist):
 				trash.append(':'.join([chr,pos,base]))
 				trash.append(':'.join([chr2,pos2,base2]))
 	trash = set(trash)
-
-	df['FINAL_FILTER'] = df.apply(lambda x : modify_filter(x['INDEX'],x['FILTER'], clust_dist, trash))
+	print(df.head())
+	df['FINAL_FILTER'] = df.apply(lambda x : 
+							   modify_filter(x['INDEX'],x['FILTER'], clust_dist, trash),
+							   axis=1)
 	return df['FINAL_FILTER']
 
 def modify_filter(INDEX, FILTER, clust_dist, trash):

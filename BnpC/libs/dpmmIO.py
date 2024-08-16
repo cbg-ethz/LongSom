@@ -276,22 +276,25 @@ def save_similarity(args, inferred, results, out_dir):
 
 def save_geno_plots(args, data, data_raw, out_dir, names):
     ctypes = pd.read_csv(args.ctypes, sep='\t')
-    scDNA = pd.read_csv(args.ctypes, sep='\t')
+    scDNA = pd.read_csv(args.scDNA, sep='\t')
+    row_cl = False
+    if args.mut_order:
+        row_cl = list(pd.read_csv(args.mut_order, sep='\t')['INDEX'])
+
     for chain, data_chain in data.items():
         for est, data_est in data_chain.items():
             out_file = os.path.join(
                 out_dir, f'genoCluster_{est}_{chain:0>2}.pdf')
             out_file_raw = os.path.join(
                 out_dir, f'genoCluster_{est}_{chain:0>2}_raw.pdf')
-
             df_obs = pd.DataFrame(data_raw, index=names[0], columns=names[1]).T
             pl.plot_raw_data(
                 data_est['genotypes'], df_obs, assignment=data_est['assignment'],
-                ctypes=ctypes, scDNA=scDNA, out_file=out_file
+                ctypes=ctypes, scDNA=scDNA, out_file=out_file, row_cl=row_cl
             )
             pl.plot_raw_data(
                 df_obs, df_obs, assignment=data_est['assignment'],
-                ctypes=ctypes, scDNA=scDNA, out_file=out_file_raw
+                ctypes=ctypes, scDNA=scDNA, out_file=out_file_raw, row_cl=row_cl
             )
 
 

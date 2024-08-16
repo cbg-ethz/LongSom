@@ -62,6 +62,10 @@ def parse_args():
         '--scDNA', type=str,
         help='Absolute or relative path(s) to input scDNA validation file'
     )
+    parser.add_argument(
+        '--mut_order', type=str, nargs='?', const='', default='',
+        help='Absolute or relative path(s) to input mutation order file'
+    )
 
 
     model = parser.add_argument_group('model')

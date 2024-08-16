@@ -193,8 +193,8 @@ def run_interval(code,var_dict,meta_dict,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha1
 			BETABIN = '.'
 			MUTATED = 'NoCoverage'
 			if DP > 0:
+				VAF = round(ALT/DP,4)
 				if ALT > 0:
-					VAF = round(ALT/DP,4)
 					#Special case for chrM due to contaminants:
 					if chrm_conta == 'True' and str(CHROM) == 'chrM':
 							if VAF < 0.3:
@@ -210,7 +210,6 @@ def run_interval(code,var_dict,meta_dict,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha1
 						else:
 							MUTATED = 'BetaBin_problem'	
 				else:
-					VAF = float(0)
 					MUTATED = 'NoAltReads'
 
 			if MUTATED == "PASS":

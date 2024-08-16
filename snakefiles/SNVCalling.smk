@@ -19,7 +19,7 @@ rule SplitBam:
     input:
         bam = f"{DATA}/bam/{{id}}.CB.bam",
         bai = f"{DATA}/bam/{{id}}.CB.bam.bai",
-        barcodes = ancient(f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv"),
+        barcodes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
     output:
         expand("{OUTDIR}/SNVCalling/SplitBam/{{id}}.{celltype}.bam", 
             celltype=CTYPES, OUTDIR=[OUTDIR])
@@ -38,7 +38,7 @@ rule SplitBam:
 
 rule BaseCellCounter:
     input:
-        bam=ancient(f"{OUTDIR}/SNVCalling/SplitBam/{{id}}.{{celltype}}.bam")
+        bam=f"{OUTDIR}/SNVCalling/SplitBam/{{id}}.{{celltype}}.bam"
     output:
         tsv=f"{OUTDIR}/SNVCalling/BaseCellCounter/{{id}}/{{id}}.{{celltype}}.tsv",
         tmp=temp(directory(f"{OUTDIR}/SNVCalling/BaseCellCounter/{{id}}/temp_{{celltype}}/"))
@@ -162,7 +162,7 @@ rule SingleCellGenotype:
     input: 
         tsv = f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step3.tsv",
         bam = f"{DATA}/bam/{{id}}.CB.bam",
-        barcodes = f"{DATA}/ctypes/{{id}}.txt",
+        barcodes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
         bb = f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt",
         fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv',
     output:
@@ -178,7 +178,7 @@ rule SingleCellGenotype:
         32
     resources:
         time = 120,
-        mem_mb = 8000
+        mem_mb = 1000
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/SNVCalling/SingleCellGenotype",

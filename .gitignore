@@ -2,5 +2,9 @@
 #launch.json folder
 .vscode/
 
-#snakemake logs folder
+#snakemake logs folders
+.snakemake/
 logs/
+
+#Large files
+CTAT_LR_Fusion/ctat_lr_fusion.v0.10.0.simg

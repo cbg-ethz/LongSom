@@ -5,12 +5,14 @@ from collections import Counter
 
 def collect_cells_with_SNVs(SNV_file):
 	SNVs = pd.read_csv(SNV_file, sep='\t')
-
+	BC_COV= SNVs[SNVs['VAF'] != '.']['CB'].unique()
+	SNVs = SNVs[SNVs['CB'].isin(BC_COV)]
 	# Filter only cells with called mutations
 	SNVs = SNVs[SNVs['MutationStatus'] == 'PASS']
+	
 
 	# Collect mutated barcodes
-	return list(SNVs['CB'])
+	return list(SNVs['CB']),BC_COV
 
 def collect_cells_with_fusions(fusion_file):
 	fusions = pd.read_csv(fusion_file, sep='\t')
@@ -27,18 +29,24 @@ def collect_cells_with_fusions(fusion_file):
 
 def collect_cancer_cells(cells_with_SNVs,cells_with_fusions,min_variants):
 	cells = cells_with_SNVs + cells_with_fusions
-	
+
 	# Count variants per cell
 	variants_per_cell = Counter(cells)
 
 	# Determine cancer cells base on user-defined # of variants
 	cancer_cells = [k for k,v in variants_per_cell.items() if v>=min_variants]
+	rescue_cells = [k for k,v in variants_per_cell.items() if v>=(min_variants-1)]
 
-	return cancer_cells
+	return cancer_cells,rescue_cells
 
 
-def write_reannotated_cell_types(cancer_cells,bc_file,out_file):
+def write_reannotated_cell_types(cancer_cells,rescue_cells,BC_COV,bc_file,out_file):
 	bcs = pd.read_csv(bc_file, sep='\t')
+	bcs = bcs[bcs['Index'].isin(BC_COV)]
+	meta_dict = dict(zip(bcs['Index'],bcs['Cell_type']))
+	rescue_cells = [i for i in bcs['Index'] if i in rescue_cells]
+	rescue_cells = [i for i in rescue_cells if meta_dict[i]=='HGSOC']
+	cancer_cells = cancer_cells+rescue_cells
 	
     # Save automated annotation
 	bcs['Automated_Cell_type'] = bcs['Cell_type']
@@ -48,10 +56,11 @@ def write_reannotated_cell_types(cancer_cells,bc_file,out_file):
 	
     # Copy reannotated celltypes for SplitBamCellTypes.py compatibility
 	bcs['Cell_type'] = bcs['Reannotated_cell_type']
+
+	bcs['Cancer_Color'] = bcs['Reannotated_cell_type'].apply(lambda x: '#94C773' if x=='NonCancer' else '#8F79A1')
 	
     # Writing output file
 	bcs.to_csv(out_file, sep='\t', index = False)
-	
 
 
 def initialize_parser():
@@ -80,16 +89,16 @@ def main():
 	print("Outfile: " , out_file ,  "\n") 
 
 	# 1. Collect cell barcodes where at least a SNV HCCV was found 
-	cells_with_SNVs = collect_cells_with_SNVs(SNV_file)
+	cells_with_SNVs,BC_COV = collect_cells_with_SNVs(SNV_file)
 
 	# 2. Collect cell barcodes where at least a fusion HCCV was found
 	cells_with_fusions = collect_cells_with_fusions(fusion_file)
 	
 	# 3. Find cancer cells (cells with the user defined min. # of HCCV variants)
-	cancer_cells = collect_cancer_cells(cells_with_SNVs,cells_with_fusions,min_variants)
+	cancer_cells,rescue_cells = collect_cancer_cells(cells_with_SNVs,cells_with_fusions,min_variants)
 
 	# 4. Write reannotated celltype file
-	write_reannotated_cell_types(cancer_cells,bc_file,out_file)
+	write_reannotated_cell_types(cancer_cells,rescue_cells,BC_COV,bc_file,out_file)
 
 
 if __name__ == '__main__':

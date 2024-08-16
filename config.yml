@@ -1,9 +1,13 @@
 Global:
   outdir: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out
   data: /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input
-  scomatic: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/SComatic/scripts
+  scomatic: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/LongSom/SComatic/scripts
+  bnpc: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/LongSom/BnpC
   annovar: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/annovar
+  subread: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/subread-2.0.6-source
+  infercnv: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/LongSom/InferCNV
   genome: /cluster/work/bewi/members/dondia/projects/ovarian_cancer/reference/hg38.fa
+  isoforms: /cluster/work/bewi/members/dondia/projects/ovarian_cancer/reference/gencode.v36.annotation.gtf
   ids:
     B486: ""
     B497: ""
@@ -26,35 +30,27 @@ CellTypeReannotation:
   celltypes:
     HGSOC: ""
     Non-HGSOC: ""
+  ctype_column: Automated_Cell_type
 
 SNVCalling:
   cancer_ctype: Cancer
   celltypes:
     Cancer: ""
     NonCancer: ""
-  min_ac_reads: 5
+  min_ac_reads: 3
   clust_dist: 10000
 
 scDNA:
-  Calling:
-    Tumor_clone: 'Clone_Tum'
-    NonTumor_clone: 'Clone_NonTum'
-    BaseCellCounter:
-      min_mapping_quality: 60
-      min_dp: 5
-      min_cc: 5  
-    BaseCellCalling:
-      min_ac_reads: 5
-  Validation:
-    BaseCellCounter:
-      min_mapping_quality: 50
-      min_dp: 1
-      min_cc: 1
-    BaseCellCalling:
-      min_ac_cells: 1
-      min_ac_reads: 1
-      min_cells: 1
-      min_cell_types: 1
+  Tumor_clone: 'Clone_Tum'
+  NonTumor_clone: 'Clone_NonTum'
+  BaseCellCounter:
+    min_mapping_quality: 30
+    min_dp: 5
+    min_cc: 2  
+  BaseCellCalling:
+    min_ac_cells: 2
+    min_ac_reads: 2
+
 
 SComatic:
   chrM_contaminant: 'True'
@@ -66,7 +62,7 @@ SComatic:
     Min_cell_types: 2
     RNA_editing: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/SComatic/RNAediting/AllEditingSites.hg38.txt
     min_distance: 5
-    PoN_SR: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/SComatic/PoNs/PoN.scRNAseq.hg38.NochrM.tsv
+    PoN_SR: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/SComatic/PoNs/PoN.scRNAseq.hg38.tsv
     gnomAD_db: /cluster/work/bewi/members/dondia/projects/long_reads_tree/ref/gnomAD
     max_gnomAD_VAF: 0.01
     deltaVAF: 0.25
@@ -81,17 +77,23 @@ SComatic:
     pvalue: 0.01
 
 BnpC:
+  outdir: '1kSteps.0.1-1dpa'
+  min_cells_per_mut: 5
+  min_pos_cov: 3
   mcmc_steps: 2000
-  outdir: test
-  missdata: ''
   cup: 0
   eup: 1e-9
   FP: -1
   FN: -1
   estimator: 'posterior'
+  pp: [1,1]
   dpa:
-    B486: [1,1]
+    B486: [1,0.1]
     B497: [1,1]
     B500: [1,1]
-
-    
+  mut_order:
+    B486: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/BnpC/BnpC_input/B486.order.tsv
+    B497: ''
+    B500: ''
+inferCNV:
+  ordering: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/LongSom/InferCNV/gene_ordering_file.txt

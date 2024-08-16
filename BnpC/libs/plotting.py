@@ -111,12 +111,11 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
         x_labels = data_in.columns
 
     if row_cl:
-        Z = linkage(data.fillna(3), 'complete')
-        row_order = dendrogram(Z, truncate_mode=None)['leaves']
+        row_order = row_cl
 
-        data = data.iloc[row_order]
+        data = data.reindex(row_order)
         if not data_raw.empty:
-            data_raw = data_raw.iloc[row_order]
+            data_raw = data_raw.reindex(row_order)
     else:
         row_order = np.arange(data.shape[0])
 
@@ -133,14 +132,13 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
         annot[data_raw.isnull()] = '-'
     else:
         annot = False
-
+    # Attributing a cmap color to scDNA VAF
+    scDNA.index = scDNA['INDEX']
     scDNA = scDNA.reindex(data.index)
     scDNASupport_Tumor = scDNA['TumorColor']
     scDNASupport_NonTumor = scDNA['NonTumorColor']
-    # cmap = plt.get_cmap('bwr', 100)
-    # cmap = plt.get_cmap('Reds', 100)
-    cmap = plt.get_cmap('Reds', 2)
 
+    cmap = plt.get_cmap('Reds', 2)
     cmap.set_over('green')
     cmap.set_bad('grey')
 
@@ -175,9 +173,14 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
         cm.gs.set_width_ratios([0, 1])
         cm.gs.set_height_ratios([0, 0.05, 0.95])
     except ValueError:
-        cm.gs.set_width_ratios([0, 0, 1])
-        cm.gs.set_height_ratios([0, 0, 0.05, 0.95])
-    cm.gs.update(left=0, bottom=0.05, right=1, top=0.95)
+        try:
+            cm.gs.set_width_ratios([0, 0.08, 1])
+            cm.gs.set_height_ratios([0, 0, 0.05, 0.95])
+        except ValueError:
+            cm.gs.set_width_ratios([0, 0.08, 1])
+            cm.gs.set_height_ratios([0, 0.05, 0.95])
+    cm.gs.update(left=0.05, bottom=0.05, right=0.95, top=0.95)
+
 
     if not out_file:
         plt.show()
