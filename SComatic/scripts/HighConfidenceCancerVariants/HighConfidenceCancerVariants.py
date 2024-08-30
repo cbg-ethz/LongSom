@@ -4,7 +4,7 @@ import timeit
 import argparse
 import pandas as pd
 
-def variant_calling_step3(file,outfile,filtered_outfile,deltaVAF,deltaCCF,cancer):
+def variant_calling_step3(file,outfile,filtered_outfile,min_dp,deltaVAF,deltaCCF,cancer,noncancer):
 
 	#---
 	# Command to focus only on high confidence cancer variants (HCCV)
@@ -31,20 +31,20 @@ def variant_calling_step3(file,outfile,filtered_outfile,deltaVAF,deltaCCF,cancer
 	f3.close()
 	
 	input_df = pd.read_csv(file, sep='\t',comment='#',names=output_column_names)
-	
+
 	#Filtering homopolymeres, GnomAD/RNA editing/PON/clustered sites, 
 	# multiallelic sites and sites with unsufficient # celltypes covered
 	input_df = input_df[~input_df['FILTER'].str.contains('Min|LR|gnomAD|LC|RNA|llel', regex=True)]
 
 	#Filtering short-read PON, except in chrM
-	input_df = input_df[~((input_df['#CHROM']!='chrM') & (input_df['FILTER'].str.contains('SR')))]
+	input_df = input_df[~((input_df['#CHROM']!='chrM') & (input_df['#CHROM']!='MT') & (input_df['FILTER'].str.contains('SR')))]
 
 	#Filtering loci passing all filters in cancer cells
-	input_df = input_df[input_df['Cell_type_Filter'].str.contains('PASS', regex=True)]
+	input_df = input_df[input_df['Cell_type_Filter'].str.contains('PASS')]
 	
 	#Delta VAF and CCF filtering
 	input_df['HCCV_FILTER'] = input_df.apply(lambda x: 
-		HCCV_filtering(x['Cell_types'],x['Dp'],x['VAF'], x['CCF'],deltaVAF,deltaCCF,cancer), axis=1)
+		HCCV_filtering(x['Cell_types'],x['Dp'],x['VAF'], x['CCF'],min_dp,deltaVAF,deltaCCF,cancer,x[noncancer]), axis=1)
 
 	filtered_df = input_df.copy(deep=True)[input_df['HCCV_FILTER'] == 'PASS']
 
@@ -62,7 +62,7 @@ def variant_calling_step3(file,outfile,filtered_outfile,deltaVAF,deltaCCF,cancer
 	region = [0,0]
 	for (chr,pos,base), (chr2,pos2,base2) in zip(b, b[1:]):
 		if chr==chr2:
-			if chr == 'chrM':
+			if chr == 'chrM' or chr == 'MT':
 				keep.append(':'.join([chr,pos,base]))
 				keep.append(':'.join([chr2,pos2,base2]))
 			elif abs(int(pos)-int(pos2))<10000:
@@ -87,18 +87,22 @@ def variant_calling_step3(file,outfile,filtered_outfile,deltaVAF,deltaCCF,cancer
 	input_df.to_csv(outfile, sep='\t', index=False,  mode='a')
 	filtered_df.to_csv(filtered_outfile, sep='\t', index=False,  mode='a')
 	
-def HCCV_filtering(CTYPES,DP,VAF,CCF,deltaVAFmin,deltaCCFmin, cancer):
+def HCCV_filtering(CTYPES,DP,VAF,CCF,min_dp,deltaVAFmin,deltaCCFmin, cancer, NonCancerInfo):
 	ctypes = CTYPES.split(',')
-	
-	#If only 1 cell type is called, no HCCV info
-	if len(ctypes)==1:
-		return 'NoInfo'
-	else:
+	#If only 1 cell type is called
+	if len(ctypes)==1 and ctypes[0]==cancer:
+		if float(VAF) >= 0.1 and float(CCF) >= 0.2:
+			DP2 = NonCancerInfo.split('|')[0]
+			if int(DP)<min_dp or int(DP2)<min_dp:
+				return 'LowDepth'
+			else:
+				return 'PASS'
+	elif len(ctypes)>1:
 		DP1,DP2=DP.split(',')
 		#Only look at higher depth loci
-		if int(DP1)<10 or int(DP2)<10:
+		if int(DP1)<min_dp or int(DP2)<min_dp:
 			return 'LowDepth'
-		VAFs = VAF.split(',')
+		VAFs= VAF.split(',')
 		VAF1 = float(VAFs[0])
 		VAF2 = float(VAFs[1])
 		deltaVAF = VAF1-VAF2
@@ -123,14 +127,18 @@ def HCCV_filtering(CTYPES,DP,VAF,CCF,deltaVAFmin,deltaCCFmin, cancer):
 				return 'LowDeltaCCF'
 			else:
 				return 'PASS'
+	else:
+		return 'NonCancer'
 
 def initialize_parser():
 	parser = argparse.ArgumentParser(description='Script to perform the scRNA somatic variant calling')
 	parser.add_argument('--infile', type=str, help='Input file with all samples merged in a single tsv', required = True)   
 	parser.add_argument('--outfile', type=str, help='Out file prefix', required = True)
+	parser.add_argument('--min_dp', type=float, default = 20, help='Minimum depth in both celltypes to call a HCCV', required = True)
 	parser.add_argument('--deltaVAF', type=float, default = 0.3, help='Delta VAF between cancer and non-cancer cells', required = True)
 	parser.add_argument('--deltaCCF', type=float, default = 0.3, help='Delta CCF (cancer cell fraction) between cancer and non-cancer cells', required = True)
 	parser.add_argument('--cancer_ctype', type=str, default = '', help='Name of cancer cell type in meta file', required = False)
+	parser.add_argument('--noncancer_ctype', type=str, default = '', help='Name of noncancer cell type in meta file', required = False)
 	return (parser)
 
 def main():
@@ -141,15 +149,17 @@ def main():
 
 	infile = args.infile
 	outfile = args.outfile
+	min_dp = args.min_dp
 	deltaVAF = args.deltaVAF
 	deltaCCF = args.deltaCCF
 	cancer_ctype = args.cancer_ctype
+	noncancer_ctype = args.noncancer_ctype
 
 	# 1.2: Step 2: Add distance, editing and PoN filters
 	print ('\n- High Confidence Cancer Variants calling\n')
 	outfile3 = outfile + '.HCCV.unfiltered.tsv'
 	filtered_outfile = outfile + '.HCCV.tsv'
-	variant_calling_step3(infile,outfile3,filtered_outfile,deltaVAF,deltaCCF,cancer_ctype)
+	variant_calling_step3(infile,outfile3,filtered_outfile,min_dp,deltaVAF,deltaCCF,cancer_ctype,noncancer_ctype)
 
 #-------------------------
 # Running scRNA somatic variant calling

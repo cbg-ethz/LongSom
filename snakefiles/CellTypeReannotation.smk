@@ -11,9 +11,6 @@ SCOMATIC_PATH=config['Global']['scomatic']
 include: 'SComaticPoN.smk'
 include: 'CTATFusion.smk'
 
-def get_mem_mb(wildcards, threads):
-    return threads * 1024
-
 def get_BetaBinEstimates(input, value):
     df = pd.read_csv(input, sep='\t')
     d = df.squeeze().to_dict()
@@ -21,83 +18,20 @@ def get_BetaBinEstimates(input, value):
 
 rule all:
     input:
-        expand(f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv", id=IDS)
+        expand(f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv", id=IDS),
+        expand(f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.BinaryMatrix.tsv", id=IDS),
     default_target: True
     
-rule Mapping:
-    input:
-        fastq = f'{DATA}/fastq/{{id}}.fastq.gz'
-    output:
-        sam = temp(f"{DATA}/bam/{{id}}.sam"),
-    params:
-        hg38 = config['Global']['genome']
-    conda:
-        "isoseq"
-    threads:
-        32
-    resources:
-        mem_mb = get_mem_mb
-    shell:
-        "minimap2 -t 30 -ax splice -uf --secondary=no -C5 "
-        "{params.hg38} {input.fastq} > {output.sam}"
-
-rule SortBam:
-    input:
-        sam = f"{DATA}/bam/{{id}}.sam"
-    output:
-        bam = temp(f"{DATA}/bam/{{id}}.bam"),
-        bai = temp(f"{DATA}/bam/{{id}}.bam.bai")
-    conda:
-        "samtools"
-    threads: 
-        8
-    resources:
-        mem_mb = get_mem_mb
-    shell:
-        "samtools sort -@ {threads} {input.sam} -o {output.bam}##idx##{output.bai} --write-index"
-
-rule AddBarcodeTag:
-    input:
-        bam = f"{DATA}/bam/{{id}}.bam",
-        bai = f"{DATA}/bam/{{id}}.bam.bai"
-    output:
-        taggedbam = f"{DATA}/bam/{{id}}.CB.bam",
-    threads: 
-        8
-    resources:
-        mem_mb = get_mem_mb
-    conda:
-        "SComatic"
-    params:
-        scomatic=SCOMATIC_PATH,
-    shell:
-        "python {params.scomatic}/AddBarcodeTag/AddBarcodeTag.py  "
-        "--input {input.bam} --output {output.taggedbam} --cpu {threads}"
-
-rule IndexBarcodedBam:
-    input:
-        taggedbam = f"{DATA}/bam/{{id}}.CB.bam",
-    output:
-        bai_bc = f"{DATA}/bam/{{id}}.CB.bam.bai"
-    conda:
-        "samtools"
-    threads: 
-        8
-    resources:
-        mem_mb = get_mem_mb
-    shell:
-        "samtools index -@ {threads}  {input.taggedbam}"
-
 rule SplitBam_Reanno:
     input:
-        bam = f"{DATA}/bam/{{id}}.CB.bam",
-        bai = f"{DATA}/bam/{{id}}.CB.bam.bai",
+        bam = f"{DATA}/bam/{{id}}.bam",
+        bai = f"{DATA}/bam/{{id}}.bam.bai",
         barcodes = f"{DATA}/ctypes/{{id}}.txt"
     output:
         expand("{OUTDIR}/CellTypeReannotation/SplitBam/{{id}}.{celltype}.bam", 
             celltype=CTYPES_REANNO, OUTDIR=[OUTDIR])
     resources:
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     conda:
         "SComatic"
     params:
@@ -119,7 +53,7 @@ rule BaseCellCounter_Reanno:
         32
     resources:
         time = 1200,
-        mem_mb = get_mem_mb
+        mem_mb = 1024
     conda:
         "SComatic"
     params:
@@ -142,7 +76,7 @@ rule MergeCounts_Reanno:
         tsv = f"{OUTDIR}/CellTypeReannotation/MergeCounts/{{id}}.BaseCellCounts.AllCellTypes.tsv"
     resources:
         time = 120,
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     conda:
         "SComatic"
     params:
@@ -154,7 +88,7 @@ rule MergeCounts_Reanno:
 
 rule BaseCellCalling_step1_Reanno:
     input: 
-        bb = f"{OUTDIR}/Pon/PoN/BetaBinEstimates.txt",
+        bb = f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt",
         tsv = f"{OUTDIR}/CellTypeReannotation/MergeCounts/{{id}}.BaseCellCounts.AllCellTypes.tsv"
     output:
         f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step1.tsv"
@@ -162,7 +96,7 @@ rule BaseCellCalling_step1_Reanno:
         "SComatic"
     resources:
         time = 120,
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/CellTypeReannotation/BaseCellCalling",
@@ -189,7 +123,7 @@ rule BaseCellCalling_step2_Reanno:
         "SComatic"
     resources:
         time = 120,
-        mem_mb = 8000
+        mem_mb = 4096
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/CellTypeReannotation/BaseCellCalling",
@@ -215,22 +149,25 @@ rule HighConfidenceCancerVariants:
         "SComatic"
     resources:
         time = 120,
-        mem_mb = 8000
+        mem_mb = 4096
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/CellTypeReannotation/HCCV",
-        deltaVAF=config['SComatic']['HCCV']['deltaVAF'],
-        deltaCCF=config['SComatic']['HCCV']['deltaCCF'],
+        min_dp=config['CellTypeReannotation']['HCCV']['min_depth'],
+        deltaVAF=config['CellTypeReannotation']['HCCV']['deltaVAF'],
+        deltaCCF=config['CellTypeReannotation']['HCCV']['deltaCCF'],
         cancer = config['CellTypeReannotation']['cancer_ctype'],
+        noncancer = config['CellTypeReannotation']['noncancer_ctype'],
     shell:
         "python {params.scomatic}/HighConfidenceCancerVariants/HighConfidenceCancerVariants.py "
         "--infile {input.tsv} --outfile {params.outdir}/{wildcards.id} "
-        "--deltaVAF {params.deltaVAF} --deltaCCF {params.deltaCCF} --cancer_ctype {params.cancer}"
+        "--min_dp {params.min_dp} --deltaVAF {params.deltaVAF} --deltaCCF {params.deltaCCF} "
+        "--cancer_ctype {params.cancer} --noncancer_ctype {params.noncancer}"
 
 rule HCCVSingleCellGenotype:
     input: 
         tsv = f"{OUTDIR}/CellTypeReannotation/HCCV/{{id}}.HCCV.tsv",
-        bam = f"{DATA}/bam/{{id}}.CB.bam",
+        bam = f"{DATA}/bam/{{id}}.bam",
         barcodes = f"{DATA}/ctypes/{{id}}.txt",
         bb = f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt",
     output:
@@ -242,14 +179,14 @@ rule HCCVSingleCellGenotype:
         32
     resources:
         time = 120,
-        mem_mb = 8000
+        mem_mb = 4096
     params:
         scomatic=SCOMATIC_PATH,
         hg38=config['Global']['genome'],
         alt_flag= config['SComatic']['SingleCellGenotype']['alt_flag'],
         mapq=config['SComatic']['BaseCellCounter']['min_mapping_quality'],
-        alpha1 = lambda w, input: get_BetaBinEstimates(input.bb, 'alpha1'),
-        beta1 = lambda w, input: get_BetaBinEstimates(input.bb, 'beta1'),
+        alpha2 = lambda w, input: get_BetaBinEstimates(input.bb, 'alpha2'),
+        beta2 = lambda w, input: get_BetaBinEstimates(input.bb, 'beta2'),
         pval = config['SComatic']['SingleCellGenotype']['pvalue'],
         chrm_conta = config['SComatic']['chrM_contaminant']
     shell:
@@ -257,7 +194,7 @@ rule HCCVSingleCellGenotype:
         "--bam {input.bam} --infile {input.tsv} --outfile {output.tsv} "
         "--meta {input.barcodes} --alt_flag {params.alt_flag} --ref {params.hg38} "
         "--nprocs {threads} --min_mq {params.mapq} --pvalue {params.pval} "
-        "--alpha1 {params.alpha1} --beta1 {params.beta1} "
+        "--alpha2 {params.alpha2} --beta2 {params.beta2} "
         "--chrM_contaminant {params.chrm_conta} --tmp_dir {output.tmp}"
 
 rule CellTypeReannotation:
@@ -269,7 +206,7 @@ rule CellTypeReannotation:
         f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv"
     resources:
         time = 1200,
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     conda:
         "SComatic"
     params:
@@ -280,4 +217,67 @@ rule CellTypeReannotation:
         "--SNVs {input.SNVs} --fusions {input.fusions} --outfile {output} "
         "--meta {input.barcodes} --min_variants {params.min_variants} "
 
+rule BaseCellCalling_step3_Reanno:
+    input: 
+        tsv = f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step2.tsv"
+    output:
+        f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step3.tsv"
+    conda:
+        "SComatic"
+    resources:
+        time = 120,
+        mem_mb = 4096
+    params:
+        scomatic=SCOMATIC_PATH,
+        outdir=f"{OUTDIR}/CellTypeReannotation/BaseCellCalling",
+        deltaVAF=config['SComatic']['BaseCellCalling']['deltaVAF'],
+        deltaCCF=config['SComatic']['BaseCellCalling']['deltaCCF'],
+        cancer = config['CellTypeReannotation']['cancer_ctype'],
+        chrm_conta = config['CellTypeReannotation']['chrM_contaminant'],
+        min_ac_reads = config['SNVCalling']['min_ac_reads'],
+        clust_dist = config['SNVCalling']['clust_dist'],
+    shell:
+        "python {params.scomatic}/BaseCellCalling/BaseCellCalling.step3.py "
+        "--infile {input.tsv} --outfile {params.outdir}/{wildcards.id} --chrM_contaminant {params.chrm_conta} "
+        "--deltaVAF {params.deltaVAF} --deltaCCF {params.deltaCCF} --cancer_ctype {params.cancer} "
+        "--min_ac_reads {params.min_ac_reads} --clust_dist {params.clust_dist} "
 
+
+rule SingleCellGenotype_Reanno:
+    input: 
+        tsv = f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step3.tsv",
+        bam = f"{DATA}/bam/{{id}}.bam",
+        barcodes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
+        bb = f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt",
+        fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv',
+    output:
+        tsv=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.SingleCellGenotype.tsv",
+        dp=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.DpMatrix.tsv",
+        alt=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.AltMatrix.tsv",
+        vaf=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.VAFMatrix.tsv",
+        bin=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.BinaryMatrix.tsv",
+        tmp=temp(directory(f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}/"))
+    conda:
+        "SComatic"
+    threads:
+        32
+    resources:
+        time = 120,
+        mem_mb = 4096
+    params:
+        scomatic=SCOMATIC_PATH,
+        outdir=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype",
+        hg38=config['Global']['genome'],
+        alt_flag= config['SComatic']['SingleCellGenotype']['alt_flag'],
+        mapq=config['SComatic']['BaseCellCounter']['min_mapping_quality'],
+        alpha2 = lambda w, input: get_BetaBinEstimates(input.bb, 'alpha2'),
+        beta2 = lambda w, input: get_BetaBinEstimates(input.bb, 'beta2'),
+        pval = config['SComatic']['SingleCellGenotype']['pvalue'],
+        chrm_conta = config['SComatic']['chrM_contaminant'],
+    shell:
+        "python {params.scomatic}/SingleCellGenotype/SingleCellGenotype.py "
+        "--infile {input.tsv} --outfile {params.outdir}/{wildcards.id} "
+        "--bam {input.bam} --meta {input.barcodes} --ref {params.hg38} --fusions {input.fusions} "
+        "--nprocs {threads} --min_mq {params.mapq} --pvalue {params.pval} "
+        "--alpha2 {params.alpha2} --beta2 {params.beta2} --alt_flag {params.alt_flag} "
+        "--chrM_contaminant {params.chrm_conta} --tmp_dir {output.tmp}"

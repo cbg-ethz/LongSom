@@ -10,8 +10,8 @@ rule all:
 
 rule split_per_bc:
     input:
-        bam = f"{DATA}/bam/{{id}}.CB.bam",
-        bai = f"{DATA}/bam/{{id}}.CB.bam.bai",
+        bam = f"{DATA}/bam/{{id}}.bam",
+        bai = f"{DATA}/bam/{{id}}.bam.bai",
         barcodes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv"
     output:
         txt = f"{OUTDIR}/InferCNV/featurecount/input/{{id}}.terminado_splitbc.tx"

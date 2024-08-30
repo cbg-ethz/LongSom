@@ -6,8 +6,8 @@ sbatch \
   -o logs/snakelog.$(date +%Y-%m-%d.%H-%M-%S).out \
   -e logs/snakelog.$(date +%Y-%m-%d.%H-%M-%S).err \
 snakemake \
-  -s snakefiles/BnpC.smk \
-  --configfile config.yml \
+  -s snakefiles/scDNAValidation.smk \
+  --configfile config/config_OvCa_LR.yml \
   --profile profile_simple/ \
   --use-conda \
   --use-singularity \

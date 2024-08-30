@@ -6,11 +6,15 @@ DATA=config['Global']['data']
 IDS=config['Global']['ids']
 BNPC_PATH=config['Global']['bnpc']
 
-include: 'scDNAValidation.smk'
+include: 'SNVCalling.smk'
 
 rule all_BnpC:
     input:
         expand(f"{OUTDIR}/BnpC/{OUTBNPC}/{{id}}/genoCluster_posterior_mean_raw.pdf",
+         id=IDS),
+        expand(f"{OUTDIR}/SNVCalling/ClusterMap/{{id}}.ClusterMap.Reannotation.pdf",
+         id=IDS),
+        expand(f"{OUTDIR}/SNVCalling/Annotations/{{id}}.hg38_multianno.txt", 
          id=IDS),
     default_target: True
 
@@ -24,7 +28,7 @@ rule filter_input_BnpC:
         bin=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.BinaryMatrix.tsv",
         vaf=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.VAFMatrix.tsv",
         scDNA=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.scDNACloneGenotype.tsv",
-        ctypes=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.Barcdodes.tsv",
+        ctypes=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.Barcodes.tsv",
     conda:
         "BnpC"
     resources:
@@ -47,7 +51,7 @@ rule BnpC_clones:
         bin=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.BinaryMatrix.tsv",
         vaf=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.VAFMatrix.tsv",
         scDNA=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.scDNACloneGenotype.tsv",
-        ctypes=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.Barcdodes.tsv",
+        ctypes=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.Barcodes.tsv",
     output:
         f"{OUTDIR}/BnpC/{OUTBNPC}/{{id}}/genoCluster_posterior_mean_raw.pdf"
     threads:

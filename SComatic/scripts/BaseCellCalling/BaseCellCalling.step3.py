@@ -4,7 +4,7 @@ import timeit
 import argparse
 import pandas as pd
 	
-def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,min_ac_reads,clust_dist,PoN_LR):
+def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,min_ac_reads,clust_dist):
 
 	#---
 	# Command to focus only on high confidence cancer variants (HCCV)
@@ -43,14 +43,17 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,mi
 		# Filtering homopolymeres, GnomAD/RNA editing/PON/clustered sites, 
 		# multiallelic sites and sites with unsufficient # celltypes covered
 		chrm_df = chrm_df[~chrm_df['FILTER'].str.contains('Min|LR|gnomAD|LC|RNA|llel', regex=True)]
-		# Applying deltaVAF and deltaCCF filters
-		chrm_df['FINAL_FILTER'] = chrm_df.apply(lambda x: 
-			chrM_filtering(x['Cell_types'],x['Dp'],x['VAF'], x['CCF'],deltaVAF,deltaCCF,cancer), axis=1)
+		if len(chrm_df)>0:
+			# Applying deltaVAF and deltaCCF filters
+			chrm_df['FINAL_FILTER'] = chrm_df.apply(lambda x: 
+				chrM_filtering(x['Cell_types'],x['Dp'],x['VAF'], x['CCF'],deltaVAF,deltaCCF,cancer), axis=1)
+		else:
+			chrM_conta == 'False'
 	
 	#Filter mutations found in cancer cells
 	input_df = input_df[input_df['Cell_types'] == cancer]
 	#Filtering min alt reads:
-	input_df = input_df[input_df['Cc'].astype(int)>=min_ac_reads]
+	input_df = input_df[input_df['Bc'].astype(int)>=min_ac_reads]
 
 
 	#Filtering out SNVs close to each other (likely mismapping or CNV event)
@@ -66,19 +69,16 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,mi
 	input_df.to_csv(out_prefix+ '.calling.step3.unfiltered.tsv', sep='\t', index=False,  mode='a')
 
 	#Filtering PASS SNVs
-	if PoN_LR!='True':
-		filtered_df = input_df[input_df['FINAL_FILTER'].isin(['PASS','Clustered','PoN_LR','Clustered,PoN_LR'])]
-	else:
-		filtered_df = input_df[input_df['FINAL_FILTER'].isin(['PASS','Clustered'])]
+	filtered_df = input_df[input_df['FINAL_FILTER'] =='PASS']
 
 	# Write output
 	filtered_df.to_csv(out_prefix+ '.calling.step3.tsv', sep='\t', index=False,  mode='a')
 	
 def chrM_filtering(CTYPES,DP,VAF,CCF,deltaVAFmin,deltaCCFmin,cancer):
 	ctypes = CTYPES.split(',')
-	VAF=VAF.split('|')[0]
-	CCF=CCF.split('|')[0]
-	DP=DP.split('|')[0]
+	VAF=VAF
+	CCF=CCF
+	DP=DP
 	if len(ctypes)>1:
 		DP1,DP2=DP.split(',')
 		#Only look at higher depth loci
@@ -115,13 +115,13 @@ def chrM_filtering(CTYPES,DP,VAF,CCF,deltaVAFmin,deltaCCFmin,cancer):
 			return 'NonCancer'
 		elif int(DP)<50:
 			return 'LowDepth'
-		elif float(VAF)<0.1:
-			return 'LowVAF'
+		elif float(CCF)<0.1:
+			return 'LowCCF'
 		else:
 			return 'PASS'
 	
 def tag_clustered_SNVs(df, clust_dist):
-	df2 = df[df['FILTER'].isin(['PASS','Clustered'])]
+	df2 = df[df['FILTER']=='PASS']
 	idx = df2['INDEX']
 	a=[]
 	for i in idx:
@@ -163,7 +163,6 @@ def initialize_parser():
 	parser.add_argument('--deltaCCF', type=float, default = 0.3, help='Delta CCF (cancer cell fraction) between cancer and non-cancer cells', required = True)
 	parser.add_argument('--cancer_ctype', type=str, default = '', help='Name of cancer cell type in meta file', required = False)
 	parser.add_argument('--chrM_contaminant', type=str, default = 'True', help='Use this option if chrM contaminants are observed in non-cancer cells', required = False)
-	parser.add_argument('--PoN_LR', type=str, default = 'True', help='Filter mutations based on PoN_LR (default: True)', required = False)
 	parser.add_argument('--min_ac_reads', type=int, default = 5, help='Minimum ALT reads', required = False)
 	parser.add_argument('--clust_dist', type=int, default = 5, help='Minimum distance required between two consecutive SNVs', required = False)
 	return (parser)
@@ -180,18 +179,12 @@ def main():
 	deltaCCF = args.deltaCCF
 	cancer_ctype = args.cancer_ctype
 	chrM_conta = args.chrM_contaminant
-	PoN_LR = args.PoN_LR
 	min_ac_reads = args.min_ac_reads
 	clust_dist = args.clust_dist
 
-	# 1. Variant calling
-	print ('\n------------------------------')
-	print ('Variant calling')
-	print ('------------------------------\n')
-
-	# 1.2: Step 2: Add distance, editing and PoN filters
+	# 1.1: Step 3: Filter only PASS mutations, not within clust_dist of each other, and apply specific chrM filters
 	print ('\n- Variant calling step 3\n')
-	variant_calling_step3(infile,out_prefix,deltaVAF,deltaCCF,cancer_ctype,chrM_conta,min_ac_reads,clust_dist,PoN_LR)
+	variant_calling_step3(infile,out_prefix,deltaVAF,deltaCCF,cancer_ctype,chrM_conta,min_ac_reads,clust_dist)
 
 #-------------------------
 # Running scRNA somatic variant calling

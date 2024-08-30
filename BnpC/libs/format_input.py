@@ -12,6 +12,8 @@ def filter_input(bin,vaf,scDNA,ctypes,min_cells_per_mut,min_pos_cov,out_prefix):
 	ctypes = pd.read_csv(ctypes,sep='\t')
 	#Save fusions:
 	fusions = [i for i in bin.index if '--' in i]
+	fusions_save = bin.loc[fusions,bin.columns]
+	bin = bin.loc[[i for i in bin.index if i not in fusions]]
 	
 	#Count non-NaN non-zero values (mutated cells) per row
 	bin = bin[bin.replace(0,np.nan).count(axis=1)>min_cells_per_mut]
@@ -36,12 +38,13 @@ def filter_input(bin,vaf,scDNA,ctypes,min_cells_per_mut,min_pos_cov,out_prefix):
 	vaf = vaf.loc[idx,cols]
 	scDNA = scDNA[scDNA['INDEX'].isin(idx)]
 	ctypes = ctypes[ctypes['Index'].isin(cols)]
+	bin = pd.concat([bin,fusions_save[cols]])
 	
 	# Write
 	bin.to_csv(out_prefix + '.BinaryMatrix.tsv', sep='\t')
 	vaf.to_csv(out_prefix + '.VAFMatrix.tsv', sep='\t')
 	scDNA.to_csv(out_prefix + '.scDNACloneGenotype.tsv', sep='\t', index = False)
-	ctypes.to_csv(out_prefix + '.Barcdodes.tsv', sep='\t', index = False)
+	ctypes.to_csv(out_prefix + '.Barcodes.tsv', sep='\t', index = False)
 
 def initialize_parser():
 	parser = argparse.ArgumentParser(description='Script to filter BnpC input matrix')

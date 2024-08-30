@@ -186,7 +186,7 @@ def run_interval(interval, BAM, FASTA, MIN_COV, MIN_CC,MIN_AF, MIN_AC, tmp_dir, 
 	
 	# Get pileup read counts from coordinates
 	bam = pysam.AlignmentFile(BAM)
-	i = bam.pileup(CHROM, START, END, min_base_quality = BQ, min_mapping_quality = MQ, ignore_overlaps = False)
+	i = bam.pileup(CHROM, START, END, min_base_quality = BQ, min_mapping_quality = MQ, ignore_overlaps = False,  max_depth = 200000)
 	
 	# Load reference file. Mandatory to be done inside function to avoid overlap problems during multiprocessing
 	inFasta = pysam.FastaFile(FASTA)

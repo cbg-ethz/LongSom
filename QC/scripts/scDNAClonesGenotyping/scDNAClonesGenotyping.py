@@ -3,6 +3,7 @@
 import timeit
 import argparse
 import pandas as pd
+from scipy.stats import betabinom
 import pysam
 import timeit
 import multiprocessing as mp
@@ -82,7 +83,7 @@ def EasyReadPileup(LIST, REF_BASE):
 			
 	return (NEW_LIST,AC)
 
-def run_interval(code,var_dict,meta_dict,clones,majorclones,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG):
+def run_interval(code,var_dict,meta_dict,clones,majorclones,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha2,beta2,pval,chrm_conta):
 	# List of positions	
 	interval = var_dict[code]
 	
@@ -127,8 +128,8 @@ def run_interval(code,var_dict,meta_dict,clones,majorclones,BAM,FASTA,tmp_dir,BQ
 	inFasta = pysam.FastaFile(FASTA)
 	
 	#Cell were the barcode is found
-	CLONES = {pos:{clone:{'Dp':0,'Alt':0} for clone in clones} for pos in List_of_target_sites }
-	MAJORCLONES = {pos:{clone:{'Dp':0,'Alt':0} for clone in majorclones} for pos in List_of_target_sites }
+	all_clones = majorclones + clones
+	CLONES = {pos:{clone:{'Dp':0,'Alt':0} for clone in all_clones} for pos in List_of_target_sites }
 	
 	# Run it for each position in pileup
 	for p in i:
@@ -171,13 +172,13 @@ def run_interval(code,var_dict,meta_dict,clones,majorclones,BAM,FASTA,tmp_dir,BQ
 				if read_alignment.is_secondary == False and read_alignment.is_duplicate == False and read_alignment.is_supplementary == False:
 					#compute depth and #alt reads per cell
 					if str(Alt_obs) == str(Alt_exp):
+						CLONES[POS][majclone]['Dp']+=1
+						CLONES[POS][majclone]['Alt']+=1
 						CLONES[POS][clone]['Dp']+=1
 						CLONES[POS][clone]['Alt']+=1
-						MAJORCLONES[POS][majclone]['Dp']+=1
-						MAJORCLONES[POS][majclone]['Alt']+=1
 					else:
+						CLONES[POS][majclone]['Dp']+=1
 						CLONES[POS][clone]['Dp']+=1
-						MAJORCLONES[POS][majclone]['Dp']+=1
 
 	#Clones and major clones VAF
 	for POS in CLONES.keys():
@@ -185,30 +186,43 @@ def run_interval(code,var_dict,meta_dict,clones,majorclones,BAM,FASTA,tmp_dir,BQ
 			#Initialize values
 			DP = CLONES[POS][CLONE]['Dp']
 			ALT = CLONES[POS][CLONE]['Alt'] 
-			CLONES[POS][CLONE]['VAF']  = '.'
+			VAF  = '.'
+			BETABIN = '.'
+			MUTATED = '.'
 			if DP > 0:
-				CLONES[POS][CLONE]['VAF'] = round(ALT/DP,4)
-		for CLONE in MAJORCLONES[POS].keys():
-			#Initialize values
-			DP = MAJORCLONES[POS][CLONE]['Dp']
-			ALT = MAJORCLONES[POS][CLONE]['Alt'] 
-			MAJORCLONES[POS][CLONE]['VAF'] = '.'
-			if DP > 0:
-				MAJORCLONES[POS][CLONE]['VAF'] = round(ALT/DP,4)
+				VAF = round(ALT/DP,4)
+				if ALT > 0:
+					#Special case for chrM due to contaminants:
+					if chrm_conta == 'True' and str(CHROM) == 'chrM':
+							if VAF < 0.3:
+								MUTATED = 'LowVAFChrM'
+							else:
+								MUTATED = 'PASS'
+					#All non-chrM chromosomes
+					else:
+						BETABIN = round(betabinom.sf(ALT-0.001, DP, alpha2, beta2),4)
+						#test if the betabin p-value is significant
+						if BETABIN < pval:
+							MUTATED = 'PASS'
+						else:
+							MUTATED = 'BetaBin_problem'	
+				else:
+					MUTATED = 'NoAltReads'
+			CLONES[POS][CLONE]['VAF'] = VAF
+			CLONES[POS][CLONE]['BetaBin'] = BETABIN
+			CLONES[POS][CLONE]['MutatedStatus'] = MUTATED
 
 		Ref_exp,Alt_exp,Cell_type_exp,Num_cells_exp = Target_sites[POS]
 		INDEX = str(CHROM) + ':' + str(POS+1) + ':' + Alt_exp.split(',')[0]
-		Group = [str(CHROM), str(POS+1),str(POS+1),Ref_exp,Alt_exp,INDEX]  #CTYPE,str(DP),str(ALT),str(VAF),str(BETABIN),str(MUTATED),str(BINARIZED),INDEX]
-		for CLONE in MAJORCLONES[POS]:
-			Group.append(str(MAJORCLONES[POS][CLONE]['Dp']))
-			Group.append(str(MAJORCLONES[POS][CLONE]['Alt']))
-			Group.append(str(MAJORCLONES[POS][CLONE]['VAF']))
+		Group = [str(CHROM), str(POS+1),str(POS+1),Ref_exp,Alt_exp,INDEX]
 		for CLONE in CLONES[POS]:
 			Group.append(str(CLONES[POS][CLONE]['Dp']))
 			Group.append(str(CLONES[POS][CLONE]['Alt']))
 			Group.append(str(CLONES[POS][CLONE]['VAF']))
+			Group.append(str(CLONES[POS][CLONE]['BetaBin']))
+			Group.append(str(CLONES[POS][CLONE]['MutatedStatus']))
 		Group = '\t'.join(Group) + '\n'
-		outfile.write(Group)		
+		outfile.write(Group)
 			
 	inFasta.close()
 	bam.close()
@@ -294,6 +308,8 @@ def concatenate_sort_clonetemp_files_and_write(out_prefix, tmp_dir, clones, majo
 			Header.append(clone + '_DP')
 			Header.append(clone + '_ALT')
 			Header.append(clone + '_VAF')
+			Header.append(clone + '_BetaBin')
+			Header.append(clone + '_MutatedStatus')
 		out.write('\t'.join(Header)+'\n')
 		
 		# Move thrugh filenanes by sorted coordinates
@@ -329,6 +345,10 @@ def initialize_parser():
 	parser.add_argument('--tissue', type=str, default=None, help='Tissue of the sample', required = False)
 	parser.add_argument('--ctype', type=str, default='Cell_type', help='Name of cell type column in meta file', required = False)
 	parser.add_argument('--tmp_dir', type=str, default = 'tmpDir', help='Temporary folder for tmp files', required = False)
+	parser.add_argument('--alpha2', type=float, default = 0.06417021801029674, help='Alpha parameter for Beta-binomial distribution of read counts. [Default: 0.260288007167716]', required = False)
+	parser.add_argument('--beta2', type=float, default = 96.3611003673487, help='Beta parameter for Beta-binomial distribution of read counts. [Default: 173.94711910763732]', required = False)
+	parser.add_argument('--pvalue', type=float, default = 0.01, help='P-value for the beta-binomial test to be significant', required = False)
+	parser.add_argument('--chrM_contaminant', type=str, default = 'True', help='Use this option if chrM contaminants are observed in non-cancer cells', required = False)
 	return (parser)
 
 def main():
@@ -350,6 +370,10 @@ def main():
 	MQ = args.min_mq
 	ALT_FLAG = args.alt_flag
 	ctype = args.ctype
+	alpha2 = args.alpha2
+	beta2 = args.beta2
+	pval = args.pvalue
+	chrm_conta = args.chrM_contaminant
 
 	# Set outfile name
 	print("Outfile prefix: " , out_prefix ,  "\n") 
@@ -376,7 +400,7 @@ def main():
 		# Step 3.1: Use loop to parallelize
 		for row in DICT_VARIANTS.keys():
 			# This funtion writes in temp files the results
-			pool.apply_async(run_interval, args=(row,DICT_VARIANTS,META_DICT,CLONES,MAJORCLONES,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG), callback=collect_result)
+			pool.apply_async(run_interval, args=(row,DICT_VARIANTS,META_DICT,CLONES,MAJORCLONES,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha2,beta2,pval,chrm_conta), callback=collect_result)
 				   
 		# Step 3.2: Close Pool and let all the processes complete	
 		pool.close()
@@ -384,7 +408,7 @@ def main():
 	else:
 		for row in DICT_VARIANTS.keys():
 			# This funtion writes in temp files the results
-			collect_result(run_interval(row,DICT_VARIANTS,META_DICT,CLONES,MAJORCLONES,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG))
+			collect_result(run_interval(row,DICT_VARIANTS,META_DICT,CLONES,MAJORCLONES,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha2,beta2,pval,chrm_conta))
 	
 	# 4. Write "Long" file
 	concatenate_sort_clonetemp_files_and_write(out_prefix, tmp_dir, CLONES, MAJORCLONES)

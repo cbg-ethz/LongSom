@@ -43,8 +43,8 @@ rule sam_to_sortedbam_PoN:
     input:
         sam = f"{DATA}/bam/{{norm}}.sam"
     output:
-        bam = temp(f"{DATA}/bam/{{norm}}.bam"),
-        bai = temp(f"{DATA}/bam/{{norm}}.bam.bai")
+        bam = temp(f"{DATA}/bam/{{norm}}.NoCB.bam"),
+        bai = temp(f"{DATA}/bam/{{norm}}.NoCB.bam.bai")
     wildcard_constraints:                                                                                                                                                            
         norm="([a-zA-Z]+)_Norm"   
     conda:
@@ -58,10 +58,10 @@ rule sam_to_sortedbam_PoN:
 
 rule AddBarcodeTag_PoN:
     input:
-        bam = f"{DATA}/bam/{{norm}}.bam",
-        bai = f"{DATA}/bam/{{norm}}.bam.bai"
+        bam = f"{DATA}/bam/{{norm}}.NoCB.bam",
+        bai = f"{DATA}/bam/{{norm}}.NoCB.bam.bai"
     output:
-        taggedbam = f"{DATA}/bam/{{norm}}.CB.bam",
+        taggedbam = f"{DATA}/bam/{{norm}}.bam",
     wildcard_constraints:                                                                                                                                                            
         norm="([a-zA-Z]+)_Norm"    
     threads: 
@@ -78,9 +78,9 @@ rule AddBarcodeTag_PoN:
 
 rule IndexBarcodedBam_PoN:
     input:
-        taggedbam = f"{DATA}/bam/{{norm}}.CB.bam",
+        taggedbam = f"{DATA}/bam/{{norm}}.bam",
     output:
-        bai_bc = f"{DATA}/bam/{{norm}}.CB.bam.bai"
+        bai_bc = f"{DATA}/bam/{{norm}}.bam.bai"
     wildcard_constraints:                                                                                                                                                            
         norm="([a-zA-Z]+)_Norm"     
     conda:
@@ -94,14 +94,14 @@ rule IndexBarcodedBam_PoN:
 
 rule SplitBam_PoN:
     input:
-        bam = f"{DATA}/bam/{{norm}}.CB.bam",
-        bai = f"{DATA}/bam/{{norm}}.CB.bam.bai",
+        bam = f"{DATA}/bam/{{norm}}.bam",
+        bai = f"{DATA}/bam/{{norm}}.bam.bai",
         barcodes = f"{DATA}/ctypes/{{norm}}.txt"
     output:
         expand("{OUTDIR}/PoN/SplitBam/{{norm}}.{norm_celltype}.bam", 
             norm_celltype=NORM_CTYPES, OUTDIR=[OUTDIR])
     resources:
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     conda:
         "SComatic"
     params:
@@ -123,7 +123,7 @@ rule BaseCellCounter_PoN:
         32
     resources:
         time = 1200,
-        mem_mb = get_mem_mb
+        mem_mb = 1024
     conda:
         "SComatic"
     params:
@@ -135,7 +135,7 @@ rule BaseCellCounter_PoN:
     shell:
         "python {params.scomatic}/BaseCellCounter/BaseCellCounter.py "
         "--bam {input.bam} --ref {params.hg38} --chrom {params.chrom} "
-        "--out_folder {params.outdir}/{wildcards.id}/ "
+        "--out_folder {params.outdir}/{wildcards.norm}/ "
         "--nprocs {threads} --min_mq {params.mapq} --tmp {output.tmp}"
 
 rule CreateInputTsvListBetaBin_PoN:
@@ -156,7 +156,7 @@ rule BetaBinEstimation_PoN:
         f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt"
     resources:
         time = 1200,
-        mem_mb = 8000
+        mem_mb = 4096
     conda:
         "rpy2"
     params:
@@ -173,7 +173,7 @@ rule MergeCounts_PoN:
         tsv = f"{OUTDIR}/PoN/MergeCounts/{{norm}}.BaseCellCounts.AllCellTypes.tsv"
     resources:
         time = 120,
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     conda:
         "SComatic"
     params:
@@ -181,7 +181,7 @@ rule MergeCounts_PoN:
         outdir=f"{OUTDIR}/PoN/BaseCellCounter",
     shell:
         "python {params.scomatic}/MergeCounts/MergeBaseCellCounts.py "
-        "--tsv_folder {params.ouTDIR}/PoN/{wildcards.norm}/ --outfile {output.tsv}"
+        "--tsv_folder {params.outdir}/{wildcards.norm}/ --outfile {output.tsv}"
 
 rule BaseCellCalling_step1_PoN:
     input: 
@@ -191,7 +191,7 @@ rule BaseCellCalling_step1_PoN:
         f"{OUTDIR}/PoN/BaseCellCalling/{{norm}}.calling.step1.tsv"
     resources:
         time = 120,
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     conda:
         "SComatic"
     params:
@@ -232,7 +232,7 @@ rule PoN:
         f"{OUTDIR}/PoN/PoN/PoN_LR.tsv"
     resources:
         time = 120,
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     conda:
         "SComatic"
     params:

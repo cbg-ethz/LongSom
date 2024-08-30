@@ -3,16 +3,21 @@ import argparse
 import pandas as pd
 from collections import Counter
 
-def collect_cells_with_SNVs(SNV_file):
+def collect_cells_with_SNVs(SNV_file, min_variants):
 	SNVs = pd.read_csv(SNV_file, sep='\t')
-	BC_COV= SNVs[SNVs['VAF'] != '.']['CB'].unique()
-	SNVs = SNVs[SNVs['CB'].isin(BC_COV)]
+	SNVs['INDEX'] = SNVs['#CHROM'] + ':' + SNVs['Start'].astype(str) + ':' + SNVs['ALT_expected'].str.split(',', n=1, expand=True)[0]
+	
+	# Keeping only cells with at least min_variants sites covered
+	BC_COV = SNVs[SNVs['VAF'] != '.']
+	BC_COV = Counter(BC_COV['CB'])
+	BC_COV_min = [k for k,v in BC_COV.items() if v>=min_variants]
+	SNVs = SNVs[SNVs['CB'].isin(BC_COV_min)]
+
 	# Filter only cells with called mutations
 	SNVs = SNVs[SNVs['MutationStatus'] == 'PASS']
 	
-
 	# Collect mutated barcodes
-	return list(SNVs['CB']),BC_COV
+	return list(SNVs['CB']),BC_COV,BC_COV_min
 
 def collect_cells_with_fusions(fusion_file):
 	fusions = pd.read_csv(fusion_file, sep='\t')
@@ -27,26 +32,25 @@ def collect_cells_with_fusions(fusion_file):
 	return list(fusions['barcodes'])
 
 
-def collect_cancer_cells(cells_with_SNVs,cells_with_fusions,min_variants):
+def collect_cancer_cells(cells_with_SNVs,cells_with_fusions,BC_COV,min_variants,min_frac):
+
 	cells = cells_with_SNVs + cells_with_fusions
 
 	# Count variants per cell
 	variants_per_cell = Counter(cells)
+	# Compute the fraction of variants with coverage that is mutated in each cell
+	mean_variants_mut_per_cell = { k : (v/BC_COV[k] if BC_COV[k]>=min_variants else 0) for k,v in variants_per_cell.items()}
 
-	# Determine cancer cells base on user-defined # of variants
-	cancer_cells = [k for k,v in variants_per_cell.items() if v>=min_variants]
-	rescue_cells = [k for k,v in variants_per_cell.items() if v>=(min_variants-1)]
+	# Determine cancer cells base on user-defined # of variants and fraction of mutated variants
+	#cancer_cells = [k for k,v in variants_per_cell.items() if v>=min_variants if mean_variants_mut_per_cell[k]>=min_frac]
+	cancer_cells = [k for k,v in variants_per_cell.items() if mean_variants_mut_per_cell[k]>=min_frac]
 
-	return cancer_cells,rescue_cells
+	return cancer_cells
 
 
-def write_reannotated_cell_types(cancer_cells,rescue_cells,BC_COV,bc_file,out_file):
+def write_reannotated_cell_types(cancer_cells,BC_COV_min,bc_file,out_file):
 	bcs = pd.read_csv(bc_file, sep='\t')
-	bcs = bcs[bcs['Index'].isin(BC_COV)]
-	meta_dict = dict(zip(bcs['Index'],bcs['Cell_type']))
-	rescue_cells = [i for i in bcs['Index'] if i in rescue_cells]
-	rescue_cells = [i for i in rescue_cells if meta_dict[i]=='HGSOC']
-	cancer_cells = cancer_cells+rescue_cells
+	bcs = bcs[bcs['Index'].isin(BC_COV_min)]
 	
     # Save automated annotation
 	bcs['Automated_Cell_type'] = bcs['Cell_type']
@@ -70,6 +74,7 @@ def initialize_parser():
 	parser.add_argument('--outfile', type=str, help='Output tsv file', required = True)
 	parser.add_argument('--meta', type=str, help='Barcodes tsv file', required = True)
 	parser.add_argument('--min_variants', type=int, default = 2, help='Minimum # of variants to call a cancer cell', required = False)
+	parser.add_argument('--min_frac', type=float, default = 0.15, help='Minimum fraction of covered variants being mutated to call a cancer cell', required = False)
 
 	return (parser)
 
@@ -84,21 +89,22 @@ def main():
 	out_file = args.outfile
 	bc_file = args.meta
 	min_variants = args.min_variants
+	min_frac = args.min_frac
 
 	# Set outfile name
 	print("Outfile: " , out_file ,  "\n") 
 
 	# 1. Collect cell barcodes where at least a SNV HCCV was found 
-	cells_with_SNVs,BC_COV = collect_cells_with_SNVs(SNV_file)
+	cells_with_SNVs,BC_COV,BC_COV_min = collect_cells_with_SNVs(SNV_file,min_variants)
 
 	# 2. Collect cell barcodes where at least a fusion HCCV was found
 	cells_with_fusions = collect_cells_with_fusions(fusion_file)
 	
 	# 3. Find cancer cells (cells with the user defined min. # of HCCV variants)
-	cancer_cells,rescue_cells = collect_cancer_cells(cells_with_SNVs,cells_with_fusions,min_variants)
+	cancer_cells = collect_cancer_cells(cells_with_SNVs,cells_with_fusions,BC_COV,min_variants,min_frac)
 
 	# 4. Write reannotated celltype file
-	write_reannotated_cell_types(cancer_cells,rescue_cells,BC_COV,bc_file,out_file)
+	write_reannotated_cell_types(cancer_cells,BC_COV_min,bc_file,out_file)
 
 
 if __name__ == '__main__':

@@ -201,7 +201,8 @@ def variant_calling_step1(file,alpha1,beta1,alpha2,beta2,min_ac_cells,min_ac_rea
 								Alt_cc_p_dict = {x : round(betabinom.sf(Alt_cc_dict[x]-0.1, int(NC), alpha2, beta2),4) for x in Alt_cc_dict.keys() }
 								Alt_cc_p_dict_sig = [x for x in Alt_cc_p_dict.keys() if Alt_cc_p_dict[x] < 0.001]
 
-								Alt_candidates = sorted(list(set(Alt_bc_p_dict_sig + Alt_cc_p_dict_sig)))
+								#CHANGE : alternative ONLY if BOTH cells and reads are significant
+								Alt_candidates = sorted([i for i in Alt_bc_p_dict_sig if i in Alt_cc_p_dict_sig])
 
 								if (len(Alt_candidates) > 0):
 									# Updating required lists for calling

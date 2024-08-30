@@ -94,8 +94,8 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
         cluster_cols = pd.Series(col_dict, name='clusters', index=col_order)
 
         ctypes = ctypes.reindex([ctypes.index[i] for i in col_order])
-        ctypes['BnpC_cluster'] = cluster_cols
-        ctypes = ctypes.sort_values(by=['BnpC_cluster','Cancer_Color'])
+        #ctypes['BnpC_cluster'] = cluster_cols
+        #ctypes = ctypes.sort_values(by=['BnpC_cluster','Cancer_Color'])
 
         data.columns = np.arange(data_in.shape[1])
         data = data[col_order]
@@ -135,8 +135,9 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
     # Attributing a cmap color to scDNA VAF
     scDNA.index = scDNA['INDEX']
     scDNA = scDNA.reindex(data.index)
-    scDNASupport_Tumor = scDNA['TumorColor']
-    scDNASupport_NonTumor = scDNA['NonTumorColor']
+    scDNASupport_Tumor = list(scDNA['TumorColor'])
+    scDNASupport_NonTumor = list(scDNA['NonTumorColor'])
+
 
     cmap = plt.get_cmap('Reds', 2)
     cmap.set_over('green')

@@ -81,7 +81,7 @@ def EasyReadPileup(LIST, REF_BASE):
 			
 	return (NEW_LIST,AC)
 
-def run_interval(code,var_dict,meta_dict,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha1,beta1,pval,chrm_conta):
+def run_interval(code,var_dict,meta_dict,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha2,beta2,pval,chrm_conta):
 	# List of positions	
 	interval = var_dict[code]
 	
@@ -203,7 +203,7 @@ def run_interval(code,var_dict,meta_dict,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha1
 								MUTATED = 'PASS'
 					#All non-chrM chromosomes
 					else:
-						BETABIN = round(betabinom.sf(ALT-0.001, DP, alpha1, beta1),4)
+						BETABIN = round(betabinom.sf(ALT-0.001, DP, alpha2, beta2),4)
 						#test if the betabin p-value is significant
 						if BETABIN < pval:
 							MUTATED = 'PASS'
@@ -393,8 +393,8 @@ def initialize_parser():
 	parser.add_argument('--min_mq', type=int, default = 255, help='Minimum mapping quality required to analyse read. Default = 255', required = False)
 	parser.add_argument('--tissue', type=str, default=None, help='Tissue of the sample', required = False)
 	parser.add_argument('--tmp_dir', type=str, default = 'tmpDir', help='Temporary folder for tmp files', required = False)
-	parser.add_argument('--alpha1', type=float, default = 0.260288007167716, help='Alpha parameter for Beta-binomial distribution of read counts. [Default: 0.260288007167716]', required = False)
-	parser.add_argument('--beta1', type=float, default = 173.94711910763732, help='Beta parameter for Beta-binomial distribution of read counts. [Default: 173.94711910763732]', required = False)
+	parser.add_argument('--alpha2', type=float, default = 0.260288007167716, help='Alpha parameter for Beta-binomial distribution of read counts. [Default: 0.260288007167716]', required = False)
+	parser.add_argument('--beta2', type=float, default = 173.94711910763732, help='Beta parameter for Beta-binomial distribution of read counts. [Default: 173.94711910763732]', required = False)
 	parser.add_argument('--pvalue', type=float, default = 0.01, help='P-value for the beta-binomial test to be significant', required = False)
 	parser.add_argument('--chrM_contaminant', type=str, default = 'True', help='Use this option if chrM contaminants are observed in non-cancer cells', required = False)
 	return (parser)
@@ -418,8 +418,8 @@ def main():
 	BQ = args.min_bq
 	MQ = args.min_mq
 	ALT_FLAG = args.alt_flag
-	alpha1 = args.alpha1
-	beta1 = args.beta1
+	alpha2 = args.alpha2
+	beta2 = args.beta2
 	pval = args.pvalue
 	chrM_conta = args.chrM_contaminant
 
@@ -448,7 +448,7 @@ def main():
 		# Step 3.1: Use loop to parallelize
 		for row in DICT_VARIANTS.keys():
 			# This funtion writes in temp files the results
-			pool.apply_async(run_interval, args=(row,DICT_VARIANTS,META_DICT,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha1,beta1,pval,chrM_conta), callback=collect_result)
+			pool.apply_async(run_interval, args=(row,DICT_VARIANTS,META_DICT,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha2,beta2,pval,chrM_conta), callback=collect_result)
 				   
 		# Step 3.2: Close Pool and let all the processes complete	
 		pool.close()
@@ -456,7 +456,7 @@ def main():
 	else:
 		for row in DICT_VARIANTS.keys():
 			# This funtion writes in temp files the results
-			collect_result(run_interval(row,DICT_VARIANTS,META_DICT,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha1,beta1,pval,chrM_conta))
+			collect_result(run_interval(row,DICT_VARIANTS,META_DICT,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha2,beta2,pval,chrM_conta))
 	
 	# 4. Write "Long" file
 	concatenate_sort_temp_files_and_write(out_prefix, tmp_dir)

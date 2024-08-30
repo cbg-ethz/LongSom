@@ -9,7 +9,7 @@ include: 'CellTypeReannotation.smk'
 
 rule all_SNVCalling:
     input:
-        expand(f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.SingleCellGenotype.tsv",
+        expand(f"{OUTDIR}/SNVCalling/ClusterMap/{{id}}.ClusterMap.Reannotation.pdf",
          id=IDS),
         expand(f"{OUTDIR}/SNVCalling/Annotations/{{id}}.hg38_multianno.txt", 
          id=IDS),
@@ -17,14 +17,14 @@ rule all_SNVCalling:
 
 rule SplitBam:
     input:
-        bam = f"{DATA}/bam/{{id}}.CB.bam",
-        bai = f"{DATA}/bam/{{id}}.CB.bam.bai",
+        bam = f"{DATA}/bam/{{id}}.bam",
+        bai = f"{DATA}/bam/{{id}}.bam.bai",
         barcodes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
     output:
         expand("{OUTDIR}/SNVCalling/SplitBam/{{id}}.{celltype}.bam", 
             celltype=CTYPES, OUTDIR=[OUTDIR])
     resources:
-        mem_mb = get_mem_mb
+        mem_mb = 32000
     conda:
         "SComatic"
     params:
@@ -46,7 +46,7 @@ rule BaseCellCounter:
         32
     resources:
         time = 1200,
-        mem_mb = get_mem_mb
+        mem_mb = 1000
     conda:
         "SComatic"
     params:
@@ -69,7 +69,7 @@ rule MergeCounts:
         tsv = f"{OUTDIR}/SNVCalling/MergeCounts/{{id}}.BaseCellCounts.AllCellTypes.tsv"
     resources:
         time = 120,
-        mem_mb = get_mem_mb
+        mem_mb = 8000
     conda:
         "SComatic"
     params:
@@ -89,7 +89,7 @@ rule BaseCellCalling_step1:
         "SComatic"
     resources:
         time = 120,
-        mem_mb = get_mem_mb
+        mem_mb = 8000
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/SNVCalling/BaseCellCalling",
@@ -161,7 +161,7 @@ rule BaseCellCalling_step3:
 rule SingleCellGenotype:
     input: 
         tsv = f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step3.tsv",
-        bam = f"{DATA}/bam/{{id}}.CB.bam",
+        bam = f"{DATA}/bam/{{id}}.bam",
         barcodes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
         bb = f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt",
         fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv',
@@ -185,8 +185,8 @@ rule SingleCellGenotype:
         hg38=config['Global']['genome'],
         alt_flag= config['SComatic']['SingleCellGenotype']['alt_flag'],
         mapq=config['SComatic']['BaseCellCounter']['min_mapping_quality'],
-        alpha1 = lambda w, input: get_BetaBinEstimates(input.bb, 'alpha1'),
-        beta1 = lambda w, input: get_BetaBinEstimates(input.bb, 'beta1'),
+        alpha2 = lambda w, input: get_BetaBinEstimates(input.bb, 'alpha2'),
+        beta2 = lambda w, input: get_BetaBinEstimates(input.bb, 'beta2'),
         pval = config['SComatic']['SingleCellGenotype']['pvalue'],
         chrm_conta = config['SComatic']['chrM_contaminant'],
     shell:
@@ -194,8 +194,28 @@ rule SingleCellGenotype:
         "--infile {input.tsv} --outfile {params.outdir}/{wildcards.id} "
         "--bam {input.bam} --meta {input.barcodes} --ref {params.hg38} --fusions {input.fusions} "
         "--nprocs {threads} --min_mq {params.mapq} --pvalue {params.pval} "
-        "--alpha1 {params.alpha1} --beta1 {params.beta1} --alt_flag {params.alt_flag} "
+        "--alpha2 {params.alpha2} --beta2 {params.beta2} --alt_flag {params.alt_flag} "
         "--chrM_contaminant {params.chrm_conta} --tmp_dir {output.tmp}"
+
+rule clustermap:
+    input:
+        bin = f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.BinaryMatrix.tsv",
+        ctypes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv"
+    output:
+        f"{OUTDIR}/SNVCalling/ClusterMap/{{id}}.ClusterMap.Reannotation.pdf",
+        f"{OUTDIR}/SNVCalling/ClusterMap/{{id}}.ClusterMap.NoReannotation.pdf",
+    conda:
+        "BnpC"
+    params:
+        scomatic=SCOMATIC_PATH,
+        outdir=f"{OUTDIR}/SNVCalling/ClusterMap",
+        height = config['SNVCalling']['clustermap']['height'],
+        width = config['SNVCalling']['clustermap']['width'],
+    shell:
+        "python {params.scomatic}/ClusterMap/ClusterMap.py "
+        "--bin {input.bin} --ctypes {input.ctypes} "
+        "--height {params.height} --width {params.width} "
+        "--out_dir {params.outdir}/{wildcards.id}"
 
 rule input_annovar:
     input:
@@ -216,7 +236,7 @@ rule run_annovar:
         mem_mb = 8000
     params:
         annovar = config['Global']['annovar'],
-        outdir = f"{OUTDIR}/SNVCalling/Annotations/"
+        outdir = f"{OUTDIR}/SNVCalling/Annotations/",
     shell:
         "perl {params.annovar}/table_annovar.pl {input} "
         "-out {params.outdir}/{wildcards.id} {params.annovar}/humandb/ "
