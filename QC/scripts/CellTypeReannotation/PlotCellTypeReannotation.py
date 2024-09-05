@@ -67,12 +67,13 @@ def PlotCellTypeReannotation(umap,reannotation,binary,id,out_prefix):
 
 	# Plotting the mean of covered  SNVs mutated per cell
 	binary = pd.read_csv(binary, sep='\t',index_col=0, na_values=[3])
-	boxplot = {'Patient':[],'Barcode':[],'Cell Categ':[],'Mean Mutated Fraction':[],'Colors':[],}
+	boxplot = {'Patient':[],'Barcode':[],'Cell Categ':[],'Total SNVs Mutated':[],'Mean Mutated Fraction':[],'Colors':[],}
 	for k in d:
 		for bc in d[k]:
 			boxplot['Patient'].append(patient[id])
 			boxplot['Barcode'].append(bc)
 			boxplot['Cell Categ'].append(k)
+			boxplot['Total SNVs Mutated'].append(np.sum(binary[bc]))
 			boxplot['Mean Mutated Fraction'].append(np.mean(binary[bc]))
 			boxplot['Colors'].append(colors[k])
 

@@ -22,10 +22,10 @@ def get_BetaBinEstimates(input, value):
 rule all_scDNACalling:
     input:
         f"{OUTDIR}/scDNACalling/BetaBinEstimates.txt",
-        expand( f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.BinaryMatrix.tsv",
-        id = SMPL),
-        expand( f"{OUTDIR}/scDNACalling/BaseCellCalling/{{scDNA}}.calling.step3.tsv",
-        scDNA = SMPL)
+        expand(f"{OUTDIR}/scDNACalling/BaseCellCalling/{{scDNA}}.calling.step3.tsv",
+        scDNA = SMPL),
+        expand(f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}.SingleCellGenotype.tsv",
+        scDNA = SMPL),
     default_target: True
 
 rule major_clone_only_scDNACalling:
@@ -60,7 +60,7 @@ rule SplitBam_scDNACalling:
 # Selecting positions with enough coverage in scRNA
 rule ExtractBedSNVCalling:
     input:
-        tsv = f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{scDNA}}.calling.step1.tsv",
+        tsv = ancient(f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{scDNA}}.calling.step1.tsv"),
     output:
         bed = f"{OUTDIR}/scDNACalling/BaseCellCounter/{{scDNA}}.scRNASites.bed"
     shell:
@@ -222,4 +222,40 @@ rule BaseCellCalling_step3_scDNACalling:
         "--deltaVAF {params.deltaVAF} --deltaCCF {params.deltaCCF} --cancer_ctype {params.cancer} "
         "--min_ac_reads {params.min_ac_reads} --clust_dist {params.clust_dist} "
 
-
+rule SingleCellGenotype_scDNACalling:
+    input: 
+        tsv = f"{OUTDIR}/SNVCalling/BaseCellCalling/{{scDNA}}.calling.step3.tsv",
+        bam = f"{DATA}/bam/scDNA/{{scDNA}}_scDNA.bam",
+        barcodes = f"{DATA}/ctypes/scDNA/clones_{{scDNA}}.tsv",
+        bb = f"{OUTDIR}/scDNACalling/BetaBinEstimates.txt"
+    output:
+        tsv=f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}.SingleCellGenotype.tsv",
+        dp=f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}.DpMatrix.tsv",
+        alt=f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}.AltMatrix.tsv",
+        vaf=f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}.VAFMatrix.tsv",
+        bin=f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}.BinaryMatrix.tsv",
+        tmp=directory(f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}/")
+    conda:
+        "SComatic"
+    threads:
+        32
+    resources:
+        time = 120,
+        mem_mb = 1000
+    params:
+        scomatic=SCOMATIC_PATH,
+        outdir=f"{OUTDIR}/scDNACalling/SingleCellGenotype",
+        hg38=config['Global']['genome'],
+        alt_flag= config['SComatic']['SingleCellGenotype']['alt_flag'],
+        mapq=config['scDNA']['BaseCellCounter']['min_mapping_quality'],
+        alpha2 = lambda w, input: get_BetaBinEstimates(input.bb, 'alpha2'),
+        beta2 = lambda w, input: get_BetaBinEstimates(input.bb, 'beta2'),
+        pval = config['SComatic']['SingleCellGenotype']['pvalue'],
+        chrm_conta = config['SComatic']['chrM_contaminant'],
+    shell:
+        "python {params.scomatic}/SingleCellGenotype/SingleCellGenotypeNoFusion.py "
+        "--infile {input.tsv} --outfile {params.outdir}/{wildcards.scDNA} "
+        "--bam {input.bam} --meta {input.barcodes} --ref {params.hg38} "
+        "--nprocs {threads} --min_mq {params.mapq} --pvalue {params.pval} "
+        "--alpha2 {params.alpha2} --beta2 {params.beta2} --alt_flag {params.alt_flag} "
+        "--chrM_contaminant {params.chrm_conta} --tmp_dir {output.tmp}"

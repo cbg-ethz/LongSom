@@ -7,6 +7,20 @@ from matplotlib_venn import venn3, venn3_circles
 def venn_diagram(SComatic,LongSom,scDNACalls,scDNAValidLong,scDNAValidSCom,scDNA_supp_in_scRNA,sampleid,out_prefix):
 	SComatic = pd.read_csv(SComatic, sep='\t', skiprows=29)
 	LongSom = pd.read_csv(LongSom, sep='\t', skiprows=29)
+
+	# Defining mutation sets: without fusions, and only positions with suficient cov in RNA (scDNA cov is ensured by default)
+	A = [i for i in SComatic['INDEX'] if '--' not in i]
+	B = [i for i in LongSom['INDEX'] if '--' not in i]
+	Ab = len([i for i in A if i not in B])
+	aB = len([i for i in B if i not in A])
+	AB = len([i for i in A if i in B])
+	plt.figure(figsize=(4,4))
+	v = venn3(subsets=(Ab,aB,AB),set_labels = ('SComatic','LongSom'))
+
+	plt.savefig(out_prefix + '.Venn2.png', dpi=600)
+	plt.close()
+
+
 	scDNACalls= pd.read_csv(scDNACalls, sep='\t', skiprows=29)
 	scDNAValidLong = pd.read_csv(scDNAValidLong, sep='\t',  na_values=['.']).fillna(0)
 	scDNAValidSCom = pd.read_csv(scDNAValidSCom, sep='\t',  na_values=['.']).fillna(0)

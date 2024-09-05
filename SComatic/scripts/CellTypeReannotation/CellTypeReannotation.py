@@ -73,8 +73,8 @@ def initialize_parser():
 	parser.add_argument('--fusions', type=str, help='HCCV fusion calls (obtained by CTAT_Fusion.smk), tsv file', required = True)
 	parser.add_argument('--outfile', type=str, help='Output tsv file', required = True)
 	parser.add_argument('--meta', type=str, help='Barcodes tsv file', required = True)
-	parser.add_argument('--min_variants', type=int, default = 2, help='Minimum # of variants to call a cancer cell', required = False)
-	parser.add_argument('--min_frac', type=float, default = 0.15, help='Minimum fraction of covered variants being mutated to call a cancer cell', required = False)
+	parser.add_argument('--min_variants', type=int, default = 3, help='Minimum # of variants covered to consider a cell', required = False)
+	parser.add_argument('--min_frac', type=float, default = 0.2, help='Minimum fraction of covered variants being mutated to call a cancer cell', required = False)
 
 	return (parser)
 

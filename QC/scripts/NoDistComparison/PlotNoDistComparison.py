@@ -6,38 +6,46 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def PlotPoNComparison(indir,outfile):
+def PlotDistComparison(indir,outfile):
 	dfs = []
 	for tsv in glob.glob(indir+'/*.tsv'):
 		df = pd.read_csv(tsv, sep='\t')
 		dfs.append(df)
 
 	df_plot = pd.concat(dfs)
-	df_plot['Percentage'].round(2)
+	df_plot = pd.melt(df_plot, id_vars=['SampleID','DistFilter'], 
+				   				value_vars=['FRAC_SUP','FRAC_GERM'], 
+								var_name='scDNA Support',
+								value_name='Fraction')
+	df_plot['scDNA Support'] = df_plot['scDNA Support'].map({'FRAC_SUP':'Fraction of SNVs\nSupported',
+														  	 'FRAC_GERM':'Fraction of SNV\nSupported as Germline',
+														  })
+
 
 	ax = sns.boxplot(
-		x='Percentage', 
-		hue='Method',
-		boxprops=dict(alpha=.5), 
-		data=df_plot,
-		showfliers=False
+		x='scDNA Support',
+		y='Fraction', 
+		hue='DistFilter', 
+		data=df_plot, 
+		boxprops=dict(alpha=.5),
+		showfliers=False,
 	)
 
 	sns.stripplot(
-		x='Percentage',
-		hue='Method',
+		x='scDNA Support',
+		y='Fraction', 
+		hue='DistFilter', 
+		edgecolor='white',
 		legend=None, 
 		data=df_plot, 
 		dodge=True, 
 		alpha=0.8,
-		s=7, 
+		s=10, 
 		ax=ax
 	)
-	ax.set_xlabel("Fraction of SNV loci\nfiltered by PoN_LR",fontsize=18)
 
-	# remove extra legend handles
-	# handles, labels = ax.get_legend_handles_labels()
-	# ax.legend(handles[2:], labels[2:], title='With PoN LR', bbox_to_anchor=(1, 1.02), loc='upper left')
+	ax.set_ylabel("Fraction of SNV loci\nmutated",fontsize=18)
+	ax.set_xlabel("scDNA Support",fontsize=18)
 	plt.tight_layout()
 	ax.figure.savefig(outfile, dpi=600, bbox_inches='tight',)
 
@@ -60,7 +68,7 @@ def main():
 	print("Outfile: " , outfile ,  "\n") 
 
 	# 1. Create clinical annotation file
-	PlotPoNComparison(indir,outfile)
+	PlotDistComparison(indir,outfile)
 
 if __name__ == '__main__':
 	start = timeit.default_timer()

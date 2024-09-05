@@ -34,13 +34,13 @@ CellTypeReannotation:
     Non-HGSOC: ""
   ctype_column: Automated_Cell_type
   chrM_contaminant: 'False'
-
-  min_variants: 3
-  
   HCCV:
     min_depth: 20
     deltaVAF: 0.25
     deltaCCF: 0.4
+  Reannotation:
+    min_variants: 3
+    min_fraction: 0.25
 
 SNVCalling:
   cancer_ctype: Cancer

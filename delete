@@ -1,0 +1,299 @@
+Building DAG of jobs...
+Job stats:
+job                                                count
+-----------------------------------------------  -------
+BaseCellCalling_step3_QC_NoDist                        3
+BaseCellCalling_step3_QC_NoPoNLR                       3
+BaseCellCalling_step3_QC_NoPoNLR_SComatic              3
+CloneGenotype_QC_NoDist                                3
+Compare_NoDist                                         3
+Compare_PoN_NoPoN                                      3
+ModifyBaseCellCalling_step2_QC_NoPoNLR                 3
+ModifyBaseCellCalling_step2_QC_NoPoNLR_SComatic        3
+all_QC                                                 1
+plot_PoN_NoPoN                                         1
+total                                                 26
+
+
+[Wed Sep  4 23:15:20 2024]
+rule ModifyBaseCellCalling_step2_QC_NoPoNLR_SComatic:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/CellTypeReannotation/BaseCellCalling/B500.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B500.calling.step2.tsv
+    jobid: 16
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B500.calling.step2.tsv
+    wildcards: id=B500
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule ModifyBaseCellCalling_step2_QC_NoPoNLR:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B486.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B486.calling.step2.tsv
+    jobid: 4
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B486.calling.step2.tsv
+    wildcards: id=B486
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule ModifyBaseCellCalling_step2_QC_NoPoNLR:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B497.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B497.calling.step2.tsv
+    jobid: 9
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B497.calling.step2.tsv
+    wildcards: id=B497
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B500.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B500.calling.step3.tsv
+    jobid: 29
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B500.calling.step3.tsv
+    wildcards: id=B500
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule ModifyBaseCellCalling_step2_QC_NoPoNLR:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B500.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B500.calling.step2.tsv
+    jobid: 14
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B500.calling.step2.tsv
+    wildcards: id=B500
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B497.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B497.calling.step3.tsv
+    jobid: 26
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B497.calling.step3.tsv
+    wildcards: id=B497
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule ModifyBaseCellCalling_step2_QC_NoPoNLR_SComatic:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/CellTypeReannotation/BaseCellCalling/B497.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B497.calling.step2.tsv
+    jobid: 11
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B497.calling.step2.tsv
+    wildcards: id=B497
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B486.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B486.calling.step3.tsv
+    jobid: 23
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B486.calling.step3.tsv
+    wildcards: id=B486
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule ModifyBaseCellCalling_step2_QC_NoPoNLR_SComatic:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/CellTypeReannotation/BaseCellCalling/B486.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B486.calling.step2.tsv
+    jobid: 6
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B486.calling.step2.tsv
+    wildcards: id=B486
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoPoNLR:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B497.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B497.calling.step3.tsv
+    jobid: 8
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B497.calling.step3.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B497.calling.step2.tsv
+    wildcards: id=B497
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule CloneGenotype_QC_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B500.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/bam/scDNA/B500_scDNA.bam, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/bam/scDNA/B500_scDNA.bam.bai, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/ctypes/scDNA/clones_B500.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/scDNACalling/BetaBinEstimates.txt
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B500.CloneGenotype.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B500
+    jobid: 28
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B500.CloneGenotype.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B500.calling.step3.tsv
+    wildcards: id=B500
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoPoNLR_SComatic:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B486.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B486.calling.step3.tsv
+    jobid: 5
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B486.calling.step3.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B486.calling.step2.tsv
+    wildcards: id=B486
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoPoNLR_SComatic:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B500.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B500.calling.step3.tsv
+    jobid: 15
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B500.calling.step3.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B500.calling.step2.tsv
+    wildcards: id=B500
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoPoNLR:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B500.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B500.calling.step3.tsv
+    jobid: 13
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B500.calling.step3.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B500.calling.step2.tsv
+    wildcards: id=B500
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule CloneGenotype_QC_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B497.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/bam/scDNA/B497_scDNA.bam, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/bam/scDNA/B497_scDNA.bam.bai, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/ctypes/scDNA/clones_B497.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/scDNACalling/BetaBinEstimates.txt
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B497.CloneGenotype.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B497
+    jobid: 25
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B497.CloneGenotype.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B497.calling.step3.tsv
+    wildcards: id=B497
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoPoNLR:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B486.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B486.calling.step3.tsv
+    jobid: 3
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B486.calling.step3.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B486.calling.step2.tsv
+    wildcards: id=B486
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule CloneGenotype_QC_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B486.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/bam/scDNA/B486_scDNA.bam, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/bam/scDNA/B486_scDNA.bam.bai, /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR/ctypes/scDNA/clones_B486.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/scDNACalling/BetaBinEstimates.txt
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B486.CloneGenotype.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B486
+    jobid: 22
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B486.CloneGenotype.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B486.calling.step3.tsv
+    wildcards: id=B486
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+
+[Wed Sep  4 23:15:20 2024]
+rule BaseCellCalling_step3_QC_NoPoNLR_SComatic:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B497.calling.step2.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B497.calling.step3.tsv
+    jobid: 10
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B497.calling.step3.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B497.calling.step2.tsv
+    wildcards: id=B497
+    resources: tmpdir=/tmp, time=120, mem_mb=8000, mem_mib=7630
+
+Would remove temporary output /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B500
+Would remove temporary output /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B497
+Would remove temporary output /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B486
+
+[Wed Sep  4 23:15:20 2024]
+rule Compare_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B486.CloneGenotype.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B486.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B486.calling.step3.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B486.NoDistComparison.tsv
+    jobid: 21
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B486.NoDistComparison.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B486.CloneGenotype.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B486.calling.step3.tsv
+    wildcards: id=B486
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule Compare_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B497.CloneGenotype.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B497.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B497.calling.step3.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B497.NoDistComparison.tsv
+    jobid: 24
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B497.NoDistComparison.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B497.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B497.CloneGenotype.tsv
+    wildcards: id=B497
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule Compare_NoDist:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B500.CloneGenotype.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B500.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B500.calling.step3.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B500.NoDistComparison.tsv
+    jobid: 27
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B500.NoDistComparison.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/BaseCellCalling/B500.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/CloneGenotype/B500.CloneGenotype.tsv
+    wildcards: id=B500
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule Compare_PoN_NoPoN:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B497.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B497.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B497.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/CellTypeReannotation/BaseCellCalling/B497.calling.step3.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B497.CompareNoPoN.tsv
+    jobid: 7
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B497.CompareNoPoN.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B497.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B497.calling.step3.tsv
+    wildcards: id=B497
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule Compare_PoN_NoPoN:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B500.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B500.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B500.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/CellTypeReannotation/BaseCellCalling/B500.calling.step3.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B500.CompareNoPoN.tsv
+    jobid: 12
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B500.CompareNoPoN.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B500.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B500.calling.step3.tsv
+    wildcards: id=B500
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule Compare_PoN_NoPoN:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B486.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/SNVCalling/BaseCellCalling/B486.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B486.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/CellTypeReannotation/BaseCellCalling/B486.calling.step3.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B486.CompareNoPoN.tsv
+    jobid: 2
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B486.CompareNoPoN.tsv; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/SComatic/BaseCellCalling/B486.calling.step3.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/LongSom/BaseCellCalling/B486.calling.step3.tsv
+    wildcards: id=B486
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+rule plot_PoN_NoPoN:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B486.CompareNoPoN.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B497.CompareNoPoN.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B500.CompareNoPoN.tsv
+    output: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/PoNNoPoNComparison.png
+    jobid: 1
+    reason: Missing output files: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/PoNNoPoNComparison.png; Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B486.CompareNoPoN.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B497.CompareNoPoN.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/B500.CompareNoPoN.tsv
+    resources: tmpdir=/tmp
+
+
+[Wed Sep  4 23:15:20 2024]
+localrule all_QC:
+    input: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/PoNNoPoNComparison.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/PlotCellTypeReannotation/MutationalBurden.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/PlotCellTypeReannotation/B486.UMAP.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/PlotCellTypeReannotation/B497.UMAP.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/PlotCellTypeReannotation/B500.UMAP.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/PlotCellTypeReannotation/B486.Heatmap.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/PlotCellTypeReannotation/B497.Heatmap.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/PlotCellTypeReannotation/B500.Heatmap.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B486.NoDistComparison.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B497.NoDistComparison.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B500.NoDistComparison.tsv
+    jobid: 0
+    reason: Input files updated by another job: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B500.NoDistComparison.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B486.NoDistComparison.tsv, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/CompareNoPoN/PoNNoPoNComparison.png, /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR/QC/NoDistComparison/B497.NoDistComparison.tsv
+    resources: tmpdir=/tmp
+
+Job stats:
+job                                                count
+-----------------------------------------------  -------
+BaseCellCalling_step3_QC_NoDist                        3
+BaseCellCalling_step3_QC_NoPoNLR                       3
+BaseCellCalling_step3_QC_NoPoNLR_SComatic              3
+CloneGenotype_QC_NoDist                                3
+Compare_NoDist                                         3
+Compare_PoN_NoPoN                                      3
+ModifyBaseCellCalling_step2_QC_NoPoNLR                 3
+ModifyBaseCellCalling_step2_QC_NoPoNLR_SComatic        3
+all_QC                                                 1
+plot_PoN_NoPoN                                         1
+total                                                 26
+
+Reasons:
+    (check individual jobs above for details)
+    input files updated by another job:
+        BaseCellCalling_step3_QC_NoPoNLR, BaseCellCalling_step3_QC_NoPoNLR_SComatic, CloneGenotype_QC_NoDist, Compare_NoDist, Compare_PoN_NoPoN, all_QC, plot_PoN_NoPoN
+    missing output files:
+        BaseCellCalling_step3_QC_NoDist, BaseCellCalling_step3_QC_NoPoNLR, BaseCellCalling_step3_QC_NoPoNLR_SComatic, CloneGenotype_QC_NoDist, Compare_NoDist, Compare_PoN_NoPoN, ModifyBaseCellCalling_step2_QC_NoPoNLR, ModifyBaseCellCalling_step2_QC_NoPoNLR_SComatic, plot_PoN_NoPoN
+
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.

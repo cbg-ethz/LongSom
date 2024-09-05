@@ -211,11 +211,13 @@ rule CellTypeReannotation:
         "SComatic"
     params:
         scomatic=SCOMATIC_PATH,
-        min_variants = config['CellTypeReannotation']['min_variants']
+        min_variants = config['CellTypeReannotation']['Reannotation']['min_variants'],
+        min_frac = config['CellTypeReannotation']['Reannotation']['min_fraction']
     shell:
         "python {params.scomatic}/CellTypeReannotation/CellTypeReannotation.py "
-        "--SNVs {input.SNVs} --fusions {input.fusions} --outfile {output} "
-        "--meta {input.barcodes} --min_variants {params.min_variants} "
+        "--SNVs {input.SNVs} --fusions {input.fusions} "
+        "--outfile {output} --meta {input.barcodes} "
+        "--min_variants {params.min_variants} --min_frac {params.min_frac}"
 
 rule BaseCellCalling_step3_Reanno:
     input: 

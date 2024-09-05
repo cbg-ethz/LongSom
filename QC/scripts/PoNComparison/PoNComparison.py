@@ -2,50 +2,33 @@ import timeit
 import argparse
 import pandas as pd
 
-def PoNComparison(YesPoN,NoPoN,genotype,id,outfile):
+def write_PoNComparison(YesPoN_L,NoPoN_L ,YesPoN_S,NoPoN_S, id, outfile):
+	frac_L = NoPoN_L/(YesPoN_L+NoPoN_L)
+	frac_S = NoPoN_S/(YesPoN_S+NoPoN_S)
+	sample_to_patient = {'B486': 'P1', 'B497': 'P2', 'B500':'P3'}
+	with open(outfile, 'w') as f:
+		f.write("SampleID\tMethod\tYesPoN\tNoPoN\tPercentage\n")
+		f.write("{}\t{}\t{}\t{}\t{}\n".format(sample_to_patient[id],'LongSom',YesPoN_L,NoPoN_L,frac_L))
+		f.write("{}\t{}\t{}\t{}\t{}\n".format(sample_to_patient[id],'SComatic',YesPoN_S,NoPoN_S,frac_S))
+
+
+def PoNComparison(YesPoN,NoPoN):
 	YesPoN = pd.read_csv(YesPoN, sep='\t', skiprows=29)
 	NoPoN = pd.read_csv(NoPoN, sep='\t', skiprows=29)
-	genotype = pd.read_csv(genotype, sep='\t',  na_values=['.']).fillna(0)
+	#geno = pd.read_csv(geno, sep='\t',  na_values=['.']).fillna(0)
 	
-	NoPoN_SNVs = [i for i in NoPoN['INDEX'] if i not in YesPoN['INDEX']]
+	NoPoN_SNVs = [i for i in list(NoPoN['INDEX']) if i not in list(YesPoN['INDEX'])]
 	YesPoN_SNVs = list(YesPoN['INDEX'])
-	print('len(PoN_SNVs) :',len(YesPoN_SNVs))
-	print('len(NoPoN_SNVs) :',len(NoPoN_SNVs))
+
+	return len(YesPoN_SNVs),len(NoPoN_SNVs)
 	
-	YesPoN_germline_tot_ratio,YesPoN_germline_support_ratio,supp,germ = genotyping(genotype,YesPoN_SNVs)
-	print('YesPoN_germline_support_ratio : ',YesPoN_germline_support_ratio)
-	print('PoN scDNA sup ', supp)
-	print('PoN scDNA germ ', germ)
-	NoPoN_germline_tot_ratio,NoPoN_germline_support_ratio,supp,germ = genotyping(genotype,NoPoN_SNVs)
-	print('NoPoN_germline_support_ratio : ', NoPoN_germline_support_ratio)
-	print('NoPoN scDNA sup ', supp)
-	print('NoPoN scDNA germ ', germ)
-	with open(outfile, 'w') as f:
-		f.write("SampleID\tYes\tNo\t#PoNFiltered\n")
-		f.write("{}\t{}\t{}\t{}\n".format(id,YesPoN_germline_tot_ratio,NoPoN_germline_tot_ratio,len(NoPoN_SNVs)))
-	
-def genotyping(genotype, SNVs):
-	genotype = genotype[genotype['INDEX'].isin(SNVs)]
-	genotype = genotype[(genotype['Clone_Tum_VAF']>0) | (genotype['Clone_NonTum_VAF']>0)]
-	tot = len(genotype)
-	genotype_support = genotype[(genotype['Clone_Tum_VAF']>0) & (genotype['Clone_NonTum_VAF']==0)]['INDEX']
-	genotype_germline = genotype[genotype['Clone_NonTum_VAF']>0]['INDEX']
-	if tot>0:
-		germline_tot_ratio = len(genotype_germline)/tot
-	else:
-		germline_tot_ratio = 0
-	if len(genotype_support):
-		germline_support_ratio = len(genotype_germline)/len(genotype_support)
-	else:
-		germline_support_ratio = 1
-	
-	return germline_tot_ratio,germline_support_ratio,len(genotype_germline),len(genotype_support)
 
 def initialize_parser():
-	parser = argparse.ArgumentParser(description='Script to get clinical and gene-level annotations')
-	parser.add_argument('--YesPoN', type=str, default=1, help='SComatic base calling file, with LR Panel of Normals (obtained by BaseCellCalling.step3.py)', required = True)
-	parser.add_argument('--NoPoN', type=str, default=1, help='SComatic base calling file, without LR Panel of Normals (obtained by BaseCellCalling.step3.py)', required = True)
-	parser.add_argument('--genotype', type=str, default=1, help='scDNA support for LongSom calls (obtained by scDNAClonesGenotyping.py)', required = True)
+	parser = argparse.ArgumentParser(description='Script to evalutate the incidence of the LR PoN')
+	parser.add_argument('--YesPoN_L', type=str, default=1, help='SComatic base calling file, with LR Panel of Normals (obtained by BaseCellCalling.step3.py)', required = True)
+	parser.add_argument('--NoPoN_L', type=str, default=1, help='SComatic base calling file, without LR Panel of Normals (obtained by BaseCellCalling.step3.py)', required = True)
+	parser.add_argument('--YesPoN_S', type=str, default=1, help='SComatic base calling file, with LR Panel of Normals (obtained by BaseCellCalling.step3.py)', required = True)
+	parser.add_argument('--NoPoN_S', type=str, default=1, help='SComatic base calling file, without LR Panel of Normals (obtained by BaseCellCalling.step3.py)', required = True)
 	parser.add_argument('--id', type=str, default=1, help='Sample ID', required = True)
 	parser.add_argument('--outfile', help='Out prefix', required = True)
 	return (parser)
@@ -56,9 +39,10 @@ def main():
 	parser = initialize_parser()
 	args = parser.parse_args()
 
-	NoPoN = args.NoPoN
-	YesPoN = args.YesPoN
-	genotype = args.genotype
+	NoPoN_L = args.NoPoN_L
+	YesPoN_L = args.YesPoN_L
+	NoPoN_S = args.NoPoN_S
+	YesPoN_S = args.YesPoN_S
 	id = args.id
 	outfile = args.outfile
 
@@ -66,7 +50,11 @@ def main():
 	print("Outfile: " , outfile ,  "\n") 
 
 	# 1. Create clinical annotation file
-	PoNComparison(YesPoN,NoPoN,genotype,id,outfile)
+	YesPoN_L,NoPoN_L = PoNComparison(YesPoN_L,NoPoN_L)
+
+	YesPoN_S,NoPoN_S = PoNComparison(YesPoN_S,NoPoN_S)
+
+	write_PoNComparison(YesPoN_L,NoPoN_L ,YesPoN_S,NoPoN_S, id, outfile)
 
 if __name__ == '__main__':
 	start = timeit.default_timer()

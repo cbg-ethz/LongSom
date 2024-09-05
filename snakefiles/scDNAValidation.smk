@@ -148,6 +148,7 @@ rule ComparisonSComaticLongSom:
         scDNAValidSCom = f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic/{{id}}.CloneGenotype.tsv",
         scDNA_supp_in_scRNA = f"{OUTDIR}/scDNAValidation/CloneGenotype/scDNASupportInRNA/{{id}}.CloneGenotype.tsv",
     output:
+        f"{OUTDIR}/scDNAValidation/Plots/{{id}}.Venn2.png",
         f"{OUTDIR}/scDNAValidation/Plots/{{id}}.Venn3.png",
         f"{OUTDIR}/scDNAValidation/Plots/{{id}}.F1Scores.tsv",
     conda:
@@ -184,16 +185,21 @@ rule plot_scDNAValidation:
     input:
         expand(f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom/{{id}}.CloneGenotype.tsv",
          id = SMPL),
+        expand(f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic/{{id}}.CloneGenotype.tsv",
+         id = SMPL),
     output:
-        png = f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.png"
+        png1 = f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.LongSom.png"
+        png2 = f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.SComatic.png"
     conda:
         "BnpC"
     params:
         qc=QC_PATH,
-        indir=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom",
+        indir1=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom",
+        indir2=f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic",
     shell:
         "python {params.qc}/scDNAValidation/PlotWaffleChartscDNAValid.py "
-        "--indir {params.indir} --outfile {output.png}"
+        "--indir1 {params.indir} --indir2 {params.indir} "
+        "--outfile1 {output.png1} --outfile2 {output.png2} "
 
     
 
