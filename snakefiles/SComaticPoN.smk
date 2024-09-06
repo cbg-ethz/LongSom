@@ -18,7 +18,6 @@ rule all_PoN:
     input:
         f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt",
         f"{OUTDIR}/PoN/PoN/PoN.tsv"
-    default_target: True
 
 rule mapping_PoN:
     input:
@@ -30,7 +29,7 @@ rule mapping_PoN:
     params:
         hg38 = config['Global']['genome']
     conda:
-        "isoseq"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -48,7 +47,7 @@ rule sam_to_sortedbam_PoN:
     wildcard_constraints:                                                                                                                                                            
         norm="([a-zA-Z]+)_Norm"   
     conda:
-        "samtools"
+        "envs/SComatic.yml"
     threads: 
         8
     resources:
@@ -69,7 +68,7 @@ rule AddBarcodeTag_PoN:
     resources:
         mem_mb = get_mem_mb
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
     shell:
@@ -84,7 +83,7 @@ rule IndexBarcodedBam_PoN:
     wildcard_constraints:                                                                                                                                                            
         norm="([a-zA-Z]+)_Norm"     
     conda:
-        "samtools"
+        "envs/SComatic.yml"
     threads: 
         8
     resources:
@@ -103,7 +102,7 @@ rule SplitBam_PoN:
     resources:
         mem_mb = 4096
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/PoN/SplitBam",
@@ -125,7 +124,7 @@ rule BaseCellCounter_PoN:
         time = 1200,
         mem_mb = 1024
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         outdir=f"{OUTDIR}/PoN/BaseCellCounter",
         scomatic=SCOMATIC_PATH,
@@ -158,7 +157,7 @@ rule BetaBinEstimation_PoN:
         time = 1200,
         mem_mb = 4096
     conda:
-        "rpy2"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
     shell:
@@ -175,7 +174,7 @@ rule MergeCounts_PoN:
         time = 120,
         mem_mb = 4096
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/PoN/BaseCellCounter",
@@ -193,7 +192,7 @@ rule BaseCellCalling_step1_PoN:
         time = 120,
         mem_mb = 4096
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/PoN/BaseCellCalling",
@@ -234,7 +233,7 @@ rule PoN:
         time = 120,
         mem_mb = 4096
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
     shell:

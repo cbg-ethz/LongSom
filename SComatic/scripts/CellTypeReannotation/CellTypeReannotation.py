@@ -47,7 +47,6 @@ def collect_cancer_cells(cells_with_SNVs,cells_with_fusions,BC_COV,min_variants,
 
 	return cancer_cells
 
-
 def write_reannotated_cell_types(cancer_cells,BC_COV_min,bc_file,out_file):
 	bcs = pd.read_csv(bc_file, sep='\t')
 	bcs = bcs[bcs['Index'].isin(BC_COV_min)]
@@ -98,7 +97,11 @@ def main():
 	cells_with_SNVs,BC_COV,BC_COV_min = collect_cells_with_SNVs(SNV_file,min_variants)
 
 	# 2. Collect cell barcodes where at least a fusion HCCV was found
-	cells_with_fusions = collect_cells_with_fusions(fusion_file)
+		# 4.5 Compute fusion matrix
+	if fusion_file:
+		cells_with_fusions = collect_cells_with_fusions(fusion_file)
+	else:
+		cells_with_fusions = []
 	
 	# 3. Find cancer cells (cells with the user defined min. # of HCCV variants)
 	cancer_cells = collect_cancer_cells(cells_with_SNVs,cells_with_fusions,BC_COV,min_variants,min_frac)

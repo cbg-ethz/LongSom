@@ -1,0 +1,25 @@
+name: SComatic
+channels:
+ - main
+ - r
+ - conda-forge
+ - bioconda
+ - pytorch
+dependencies:
+  - python=3.7
+  - r-base=3.6.1
+  - minimap2
+  - samtools
+  - datamash
+  - bedtools
+  - r-vgam
+  - pip
+  - pip:
+    - about-time
+    - numpy
+    - numpy-groupies
+    - pandas
+    - pybedtools
+    - pysam
+    - rpy2
+    - scipy

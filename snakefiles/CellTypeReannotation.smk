@@ -7,20 +7,19 @@ OUTDIR=config['Global']['outdir']
 DATA=config['Global']['data']
 IDS=config['Global']['ids']
 SCOMATIC_PATH=config['Global']['scomatic']
+CTATFUSION=config['Run']['ctatfusion']
 
-include: 'SComaticPoN.smk'
-include: 'CTATFusion.smk'
+#include: 'SComaticPoN.smk'
+#include: 'CTATFusion.smk'
 
 def get_BetaBinEstimates(input, value):
     df = pd.read_csv(input, sep='\t')
     d = df.squeeze().to_dict()
     return d[value]
 
-rule all:
+rule all_reanno:
     input:
         expand(f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv", id=IDS),
-        expand(f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.BinaryMatrix.tsv", id=IDS),
-    default_target: True
     
 rule SplitBam_Reanno:
     input:
@@ -33,7 +32,7 @@ rule SplitBam_Reanno:
     resources:
         mem_mb = 4096
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/CellTypeReannotation/SplitBam",
@@ -55,7 +54,7 @@ rule BaseCellCounter_Reanno:
         time = 1200,
         mem_mb = 1024
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         outdir=f"{OUTDIR}/CellTypeReannotation/BaseCellCounter",
         scomatic=SCOMATIC_PATH,
@@ -78,7 +77,7 @@ rule MergeCounts_Reanno:
         time = 120,
         mem_mb = 4096
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/CellTypeReannotation/BaseCellCounter",
@@ -93,7 +92,7 @@ rule BaseCellCalling_step1_Reanno:
     output:
         f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step1.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 4096
@@ -120,7 +119,7 @@ rule BaseCellCalling_step2_Reanno:
     output:
         f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step2.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 4096
@@ -146,7 +145,7 @@ rule HighConfidenceCancerVariants:
     output:
         f"{OUTDIR}/CellTypeReannotation/HCCV/{{id}}.HCCV.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 4096
@@ -174,7 +173,7 @@ rule HCCVSingleCellGenotype:
         tsv=f"{OUTDIR}/CellTypeReannotation/HCCV/{{id}}.SingleCellGenotype.tsv",
         tmp=temp(directory(f"{OUTDIR}/CellTypeReannotation/HCCV/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -200,7 +199,7 @@ rule HCCVSingleCellGenotype:
 rule CellTypeReannotation:
     input:
         SNVs = f"{OUTDIR}/CellTypeReannotation/HCCV/{{id}}.SingleCellGenotype.tsv",
-        fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv',
+        fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv' if CTATFUSION else [],
         barcodes = f"{DATA}/ctypes/{{id}}.txt"
     output:
         f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv"
@@ -208,7 +207,7 @@ rule CellTypeReannotation:
         time = 1200,
         mem_mb = 4096
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         min_variants = config['CellTypeReannotation']['Reannotation']['min_variants'],
@@ -225,7 +224,7 @@ rule BaseCellCalling_step3_Reanno:
     output:
         f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step3.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 4096
@@ -251,7 +250,7 @@ rule SingleCellGenotype_Reanno:
         bam = f"{DATA}/bam/{{id}}.bam",
         barcodes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
         bb = f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt",
-        fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv',
+        fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv' if CTATFUSION else [],
     output:
         tsv=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.SingleCellGenotype.tsv",
         dp=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.DpMatrix.tsv",
@@ -260,7 +259,7 @@ rule SingleCellGenotype_Reanno:
         bin=f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.BinaryMatrix.tsv",
         tmp=temp(directory(f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:

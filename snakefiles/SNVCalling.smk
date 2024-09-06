@@ -4,8 +4,9 @@ OUTDIR=config['Global']['outdir']
 DATA=config['Global']['data']
 IDS=config['Global']['ids']
 SCOMATIC_PATH=config['Global']['scomatic']
+CTATFUSION =config['Run']['ctatfusion']
 
-include: 'CellTypeReannotation.smk'
+#include: 'CellTypeReannotation.smk'
 
 rule all_SNVCalling:
     input:
@@ -13,7 +14,6 @@ rule all_SNVCalling:
          id=IDS),
         expand(f"{OUTDIR}/SNVCalling/Annotations/{{id}}.hg38_multianno.txt", 
          id=IDS),
-    default_target: True
 
 rule SplitBam:
     input:
@@ -26,7 +26,7 @@ rule SplitBam:
     resources:
         mem_mb = 32000
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/SNVCalling/SplitBam",
@@ -48,7 +48,7 @@ rule BaseCellCounter:
         time = 1200,
         mem_mb = 1000
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         outdir=f"{OUTDIR}/SNVCalling/BaseCellCounter",
         scomatic=SCOMATIC_PATH,
@@ -71,7 +71,7 @@ rule MergeCounts:
         time = 120,
         mem_mb = 8000
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/SNVCalling/BaseCellCounter",
@@ -86,7 +86,7 @@ rule BaseCellCalling_step1:
     output:
         f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step1.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 8000
@@ -113,7 +113,7 @@ rule BaseCellCalling_step2:
     output:
         f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step2.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 8000
@@ -139,7 +139,7 @@ rule BaseCellCalling_step3:
     output:
         f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step3.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 8000
@@ -164,7 +164,7 @@ rule SingleCellGenotype:
         bam = f"{DATA}/bam/{{id}}.bam",
         barcodes = f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
         bb = f"{OUTDIR}/PoN/PoN/BetaBinEstimates.txt",
-        fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv',
+        fusions = f'{OUTDIR}/CTATFusion/{{id}}.fusion_of_interest.tsv' if CTATFUSION else [],
     output:
         tsv=f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.SingleCellGenotype.tsv",
         dp=f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.DpMatrix.tsv",
@@ -173,7 +173,7 @@ rule SingleCellGenotype:
         bin=f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.BinaryMatrix.tsv",
         tmp=temp(directory(f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -205,7 +205,7 @@ rule clustermap:
         f"{OUTDIR}/SNVCalling/ClusterMap/{{id}}.ClusterMap.Reannotation.pdf",
         f"{OUTDIR}/SNVCalling/ClusterMap/{{id}}.ClusterMap.NoReannotation.pdf",
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/SNVCalling/ClusterMap",

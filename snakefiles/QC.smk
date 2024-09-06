@@ -36,7 +36,7 @@ rule BaseCellCalling_step3_QC_NoPoNLR:
     output:
         f"{OUTDIR}/QC/CompareNoPoN/LongSom/BaseCellCalling/{{id}}.calling.step3.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 8000
@@ -66,7 +66,7 @@ rule CloneGenotype_QC_NoPoNLR:
         tsv = f"{OUTDIR}/QC/CompareNoPoN/LongSom/CloneGenotype/{{id}}.CloneGenotype.tsv",
         tmp=temp(directory(f"{OUTDIR}/QC/CompareNoPoN/LongSom/CloneGenotype/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -104,7 +104,7 @@ rule BaseCellCalling_step3_QC_NoPoNLR_SComatic:
     output:
         f"{OUTDIR}/QC/CompareNoPoN/SComatic/BaseCellCalling/{{id}}.calling.step3.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 4096
@@ -134,7 +134,7 @@ rule CloneGenotype_QC_NoPoNLR_SComatic:
         tsv = f"{OUTDIR}/QC/CompareNoPoN/SComatic/CloneGenotype/{{id}}.CloneGenotype.tsv",
         tmp=temp(directory(f"{OUTDIR}/QC/CompareNoPoN/SComatic/CloneGenotype/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -167,7 +167,7 @@ rule Compare_PoN_NoPoN:
     output:
         tsv = f"{OUTDIR}/QC/CompareNoPoN/{{id}}.CompareNoPoN.tsv"
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     params:
         qc=QC_PATH,
         outdir=f"{OUTDIR}/QC/PoNComparison",
@@ -183,7 +183,7 @@ rule plot_PoN_NoPoN:
     output:
         png = f"{OUTDIR}/QC/CompareNoPoN/PoNNoPoNComparison.png"
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     params:
         qc=QC_PATH,
         indir=f"{OUTDIR}/QC/CompareNoPoN",
@@ -198,7 +198,7 @@ rule BaseCellCalling_step3_QC_NoDist:
     output:
         f"{OUTDIR}/QC/NoDistComparison/{CLUSTDIST}/BaseCellCalling/{{id}}.calling.step3.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 8000
@@ -228,7 +228,7 @@ rule CloneGenotype_QC_NoDist:
         tsv = f"{OUTDIR}/QC/NoDistComparison/{CLUSTDIST}/CloneGenotype/{{id}}.CloneGenotype.tsv",
         tmp=temp(directory(f"{OUTDIR}/QC/NoDistComparison/{CLUSTDIST}/CloneGenotype/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -273,7 +273,7 @@ rule plot_NoDist:
     output:
         png = f"{OUTDIR}/QC/NoDistComparison/{CLUSTDIST}/NoDistComparison.png"
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     params:
         qc=QC_PATH,
         indir=f"{OUTDIR}/QC/NoDistComparison/{CLUSTDIST}/",
@@ -291,7 +291,7 @@ rule PlotCellTypeReannotation:
         heatmap = f"{OUTDIR}/QC/PlotCellTypeReannotation/{{id}}.Heatmap.png",
         tsv = f"{OUTDIR}/QC/PlotCellTypeReannotation/{{id}}.boxplot.tsv"
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     params:
         qc=QC_PATH,
         outdir=f"{OUTDIR}/QC/PlotCellTypeReannotation",
@@ -307,7 +307,7 @@ rule PlotMutationalBurden:
         png1 = f"{OUTDIR}/QC/PlotCellTypeReannotation/MeanVAF.png",
         png2 = f"{OUTDIR}/QC/PlotCellTypeReannotation/MutationalBurden.png",
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     params:
         qc=QC_PATH,
         indir=f"{OUTDIR}/QC/PlotCellTypeReannotation",

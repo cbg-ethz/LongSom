@@ -12,7 +12,10 @@ def get_mem_mb(wildcards, threads):
 rule all_scDNAValidation:
     input:
         f"{OUTDIR}/scDNAValidation/Plots/F1_plot.png",
-        f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.png",
+        f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.LongSom.png",
+        f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.SComatic.png",
+        expand(f"{OUTDIR}/scDNAValidation/Plots/{{id}}.Venn2.png",
+         id = SMPL),
         expand(f"{OUTDIR}/scDNAValidation/Plots/{{id}}.Venn3.png",
          id = SMPL),
         #SNVCalling
@@ -44,7 +47,7 @@ rule CloneGenotype_LongSom:
         tsv = f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom/{{id}}.CloneGenotype.tsv",
         tmp=temp(directory(f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -79,7 +82,7 @@ rule CloneGenotype_SComatic:
         tsv = f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic/{{id}}.CloneGenotype.tsv",
         tmp=temp(directory(f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -114,7 +117,7 @@ rule scDNA_supp_in_scRNA:
         tsv = f"{OUTDIR}/scDNAValidation/CloneGenotype/scDNASupportInRNA/{{id}}.CloneGenotype.tsv",
         tmp=temp(directory(f"{OUTDIR}/scDNAValidation/CloneGenotype/scDNASupportInRNA/{{id}}/"))
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -152,7 +155,7 @@ rule ComparisonSComaticLongSom:
         f"{OUTDIR}/scDNAValidation/Plots/{{id}}.Venn3.png",
         f"{OUTDIR}/scDNAValidation/Plots/{{id}}.F1Scores.tsv",
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     resources:
         time = 120,
         mem_mb = 8000
@@ -173,7 +176,7 @@ rule plot_ComparisonSComaticLongSom:
     output:
         png = f"{OUTDIR}/scDNAValidation/Plots/F1_plot.png"
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     params:
         qc=QC_PATH,
         indir=f"{OUTDIR}/scDNAValidation/Plots",
@@ -188,17 +191,17 @@ rule plot_scDNAValidation:
         expand(f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic/{{id}}.CloneGenotype.tsv",
          id = SMPL),
     output:
-        png1 = f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.LongSom.png"
+        png1 = f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.LongSom.png",
         png2 = f"{OUTDIR}/scDNAValidation/Plots/scDNAValidation.WaffleChart.SComatic.png"
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     params:
         qc=QC_PATH,
         indir1=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom",
         indir2=f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic",
     shell:
         "python {params.qc}/scDNAValidation/PlotWaffleChartscDNAValid.py "
-        "--indir1 {params.indir} --indir2 {params.indir} "
+        "--indir1 {params.indir1} --indir2 {params.indir2} "
         "--outfile1 {output.png1} --outfile2 {output.png2} "
 
     

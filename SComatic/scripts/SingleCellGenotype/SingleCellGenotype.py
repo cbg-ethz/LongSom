@@ -353,9 +353,11 @@ def sort_chr_index(df):
 def pivot_long_dataframe(out_prefix, fusions):
 	#Pivot long SingleCellGenotype file into wide cell-SNV matrixes
 	long_df = pd.read_csv(out_prefix + '.SingleCellGenotype.tsv', sep = '\t')
+	
+	if not fusions.empty:
 	#Concatenate fusions with SingleCellGenotype.tsv
-	fusions.columns = long_df.columns
-	long_df = pd.concat([long_df,fusions]).fillna(3)
+		fusions.columns = long_df.columns
+		long_df = pd.concat([long_df,fusions]).fillna(3)
 
 	# Cell-SNV matrix with reads depth as values
 	Dp_df = long_df.pivot(index='INDEX', columns='CB', values='Dp')
@@ -384,7 +386,7 @@ def initialize_parser():
 	parser.add_argument('--infile', type=str, default=1, help='Base calling file (obtained by BaseCellCalling.step2.py), ideally only the PASS variants', required = True)
 	parser.add_argument('--ref', type=str, default=1, help='Reference genome. *fai must be available in the same folder as reference', required = True)
 	parser.add_argument('--meta', type=str, default=1, help='Metadata with cell barcodes per cell type', required = True)
-	parser.add_argument('--fusions', type=str, help='Fusions file from CTAT_fusion', required = False)
+	parser.add_argument('--fusions', type=str, help='Fusions file from CTAT_fusion', nargs='?', const='', required = True)
 	parser.add_argument('--outfile', default = 'Matrix.tsv', help='Out file', required = False)
 	parser.add_argument('--alt_flag', default = 'All',choices = ['Alt','All'], help='Flag to search for cells carrying the expected alt variant (Alt) or all cells independent of the alt allele observed (All)', required = False)
 	parser.add_argument('--nprocs',default = 1, help='Number of processes [Default = 1]',required=False,type = int)
@@ -393,8 +395,8 @@ def initialize_parser():
 	parser.add_argument('--min_mq', type=int, default = 255, help='Minimum mapping quality required to analyse read. Default = 255', required = False)
 	parser.add_argument('--tissue', type=str, default=None, help='Tissue of the sample', required = False)
 	parser.add_argument('--tmp_dir', type=str, default = 'tmpDir', help='Temporary folder for tmp files', required = False)
-	parser.add_argument('--alpha2', type=float, default = 0.260288007167716, help='Alpha parameter for Beta-binomial distribution of read counts. [Default: 0.260288007167716]', required = False)
-	parser.add_argument('--beta2', type=float, default = 173.94711910763732, help='Beta parameter for Beta-binomial distribution of read counts. [Default: 173.94711910763732]', required = False)
+	parser.add_argument('--alpha2', type=float, default = 0.2474528917555431, help='Alpha parameter for Beta-binomial distribution of read counts. [Default: 0.260288007167716]', required = False)
+	parser.add_argument('--beta2', type=float, default = 162.03696139428595, help='Beta parameter for Beta-binomial distribution of read counts. [Default: 173.94711910763732]', required = False)
 	parser.add_argument('--pvalue', type=float, default = 0.01, help='P-value for the beta-binomial test to be significant', required = False)
 	parser.add_argument('--chrM_contaminant', type=str, default = 'True', help='Use this option if chrM contaminants are observed in non-cancer cells', required = False)
 	return (parser)
@@ -462,7 +464,10 @@ def main():
 	concatenate_sort_temp_files_and_write(out_prefix, tmp_dir)
 
 	# 4.5 Compute fusion matrix
-	fusions = collect_cells_with_fusions(fusion_file)
+	if fusion_file:
+		fusions = collect_cells_with_fusions(fusion_file)
+	else:
+		fusions = pd.DataFrame()
 
 	# 5. Write matrixes ("wide") DP/ALT/VAF/Binarized files
 	pivot_long_dataframe(out_prefix,fusions)

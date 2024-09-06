@@ -7,7 +7,7 @@ def DistComparison(YesDist,NoDist,geno,id,outfile):
 	NoDist = pd.read_csv(NoDist, sep='\t', skiprows=29)
 	geno = pd.read_csv(geno, sep='\t',  na_values=['.']).fillna(0)
 	
-	if len(NoDist['INDEX']) - len(YesDist['INDEX']) <= 0:
+	if len(NoDist['INDEX']) - len(YesDist['INDEX']) >= 0:
 		NoDist_SNVs = [i for i in list(NoDist['INDEX']) if i not in list(YesDist['INDEX'])]
 		YesDist_SNVs = list(YesDist['INDEX'])
 		for i in NoDist_SNVs:

@@ -1,3 +1,23 @@
+# LongSom config yaml file
+
+Run:
+  # Run cell type reannotation
+  reanno: True
+  # Run SNV calling with SComatic
+  scomatic: True
+  # Run SNV annotation with annovar
+  annovar: False
+  # Run cell clustering with BnpC
+  bnpc: True
+  # Run fusion calling with CTAT-LR-Fusion
+  ctatfusion: False
+  # Run CNV calling with InferCNV
+  infercnv: False
+  # Generate various plots
+  plot: False
+  # Run scDNA validation (DEV only)
+  scdna: False
+
 Global:
   outdir: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_LR
   data: /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_LR

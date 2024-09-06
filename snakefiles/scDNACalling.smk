@@ -47,7 +47,7 @@ rule SplitBam_scDNACalling:
     resources:
         mem_mb = 1000
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/scDNACalling/SplitBam",
@@ -81,7 +81,7 @@ rule BaseCellCounter_scDNACalling:
         time = 1200,
         mem_mb = 1000
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         outdir=f"{OUTDIR}/scDNACalling/BaseCellCounter",
         scomatic=SCOMATIC_PATH,
@@ -117,7 +117,7 @@ rule BetaBinEstimation_scDNACalling:
         time = 1200,
         mem_mb = 10000
     conda:
-        "rpy2"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
     shell:
@@ -134,7 +134,7 @@ rule MergeCounts_scDNACalling:
         time = 120,
         mem_mb = 4000
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/scDNACalling/BaseCellCounter",
@@ -152,7 +152,7 @@ rule BaseCellCalling_step1_scDNACalling:
         time = 120,
         mem_mb = 4000
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/scDNACalling/BaseCellCalling",
@@ -177,7 +177,7 @@ rule BaseCellCalling_step2_scDNACalling:
     output:
         f"{OUTDIR}/scDNACalling/BaseCellCalling/{{scDNA}}.calling.step2.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 8000
@@ -203,7 +203,7 @@ rule BaseCellCalling_step3_scDNACalling:
     output:
         f"{OUTDIR}/scDNACalling/BaseCellCalling/{{scDNA}}.calling.step3.tsv"
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     resources:
         time = 120,
         mem_mb = 8000
@@ -236,7 +236,7 @@ rule SingleCellGenotype_scDNACalling:
         bin=f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}.BinaryMatrix.tsv",
         tmp=directory(f"{OUTDIR}/scDNACalling/SingleCellGenotype/{{scDNA}}/")
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     threads:
         32
     resources:

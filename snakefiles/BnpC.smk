@@ -5,8 +5,8 @@ OUTBNPC=config['BnpC']['outdir']
 DATA=config['Global']['data']
 IDS=config['Global']['ids']
 BNPC_PATH=config['Global']['bnpc']
-
-include: 'SNVCalling.smk'
+SCDNA=config['Run']['scdna']
+#include: 'SNVCalling.smk'
 
 rule all_BnpC:
     input:
@@ -16,13 +16,12 @@ rule all_BnpC:
          id=IDS),
         expand(f"{OUTDIR}/SNVCalling/Annotations/{{id}}.hg38_multianno.txt", 
          id=IDS),
-    default_target: True
 
-rule filter_input_BnpC:
+rule FormatInputBnpC:
     input:
         bin=f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.BinaryMatrix.tsv",
         vaf=f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.VAFMatrix.tsv",
-        scDNA=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom/{{id}}.CloneGenotype.tsv",
+        scDNA=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom/{{id}}.CloneGenotype.tsv" if SCDNA else [],
         ctypes=f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
     output:
         bin=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.BinaryMatrix.tsv",
@@ -30,7 +29,7 @@ rule filter_input_BnpC:
         scDNA=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.scDNACloneGenotype.tsv",
         ctypes=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.Barcodes.tsv",
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     resources:
         time = 1200,
         mem_mb=2000
@@ -72,7 +71,7 @@ rule BnpC_clones:
         pp= config['BnpC']['pp'],
         mut_order= lambda w: config['BnpC']['mut_order'][w.get("id")],
     conda:
-        "BnpC"
+        "envs/BnpC.yml"
     shell:
         "python {params.bnpc}/run_BnpC.py {input.bin} -n {threads} "
         "-o {params.outdir}/{wildcards.id} -s {params.mcmc_steps} "

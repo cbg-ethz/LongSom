@@ -12,7 +12,7 @@ snakemake \
   --use-conda \
   --use-singularity \
   --singularity-args "-B `pwd` -B ${DATA_FOLDER}:/data -B /tmp:/tmp -B ${REF_FOLDER}:/ref:ro" \
-  -pr \
   --latency-wait 30 \
   --show-failed-logs \
-  "$@" #--rerun-triggers mtime \
+  --rerun-triggers mtime \
+  -p 

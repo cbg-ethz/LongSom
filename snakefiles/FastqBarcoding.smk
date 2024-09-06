@@ -5,11 +5,10 @@ DATA=config['Global']['data']
 IDS=config['Global']['ids']
 
 
-rule all:
+rule all_fastq:
     input:
         expand(f"{DATA}/bam/{{id}}.bam.bai", id=IDS),
         expand(f"{DATA}/bam/{{id}}.bam", id=IDS),
-    default_target: True
     
 rule Mapping:
     input:
@@ -19,7 +18,7 @@ rule Mapping:
     params:
         hg38 = config['Global']['genome']
     conda:
-        "isoseq"
+        "envs/SComatic.yml"
     threads:
         32
     resources:
@@ -35,11 +34,11 @@ rule SortBam:
         bam = temp(f"{DATA}/bam/{{id}}.NoCB.bam"),
         bai = temp(f"{DATA}/bam/{{id}}.NoCB.bam.bai")
     conda:
-        "samtools"
+        "envs/SComatic.yml"
     threads: 
         8
     resources:
-        mem_mb = get_mem_mb
+        mem_mb = 1024
     shell:
         "samtools sort -@ {threads} {input.sam} -o {output.bam}##idx##{output.bai} --write-index"
 
@@ -52,9 +51,9 @@ rule AddBarcodeTag:
     threads: 
         8
     resources:
-        mem_mb = get_mem_mb
+        mem_mb = 4096
     conda:
-        "SComatic"
+        "envs/SComatic.yml"
     params:
         scomatic=SCOMATIC_PATH,
     shell:
@@ -67,10 +66,10 @@ rule IndexBarcodedBam:
     output:
         bai_bc = f"{DATA}/bam/{{id}}.bam.bai"
     conda:
-        "samtools"
+        "envs/SComatic.yml"
     threads: 
         8
     resources:
-        mem_mb = get_mem_mb
+        mem_mb = 1024
     shell:
         "samtools index -@ {threads}  {input.taggedbam}"
