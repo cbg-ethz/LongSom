@@ -31,8 +31,8 @@ def genotyping(geno, SNVs):
 	geno = geno[~geno['INDEX'].str.contains('chrM')]
 	PASS = list(geno[(geno['Clone_Tum_MutatedStatus']=='PASS') & (geno['Clone_NonTum_MutatedStatus']!='PASS')]['INDEX'])
 	GERM = list(geno[geno['Clone_NonTum_MutatedStatus']=='PASS']['INDEX'])
-	SUPP = [i for i in geno[(geno['Clone_Tum_VAF']>0) | geno['Clone_NonTum_VAF']>0]['INDEX'] if i not in PASS+GERM]
-	NOTUM_HIGHCOV = [i for i in geno[geno['Clone_Tum_DP']>=10]['INDEX'] if i not in  PASS+GERM+SUPP]
+	SUPP = [i for i in geno[(geno['Clone_Tum_VAF']>0) | (geno['Clone_NonTum_VAF']>0)]['INDEX'] if i not in PASS+GERM]
+	NOTUM_HIGHCOV = [i for i in geno[geno['Clone_Tum_DP']>=17]['INDEX'] if i not in  PASS+GERM+SUPP]
 
 	return len(PASS),len(GERM),len(SUPP),len(NOTUM_HIGHCOV)
 

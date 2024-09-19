@@ -36,6 +36,8 @@ def filter_input(bin,vaf,scDNA,ctypes,min_cells_per_mut,min_pos_cov,out_prefix):
 	
 	# Filter all input files:
 	vaf = vaf.loc[idx,cols]
+	if not 'chr' in idx[0]:
+		scDNA['INDEX'] = [i.split('chr')[1] if '--' not in i else i for i in list(scDNA['INDEX'])]
 	scDNA = scDNA[scDNA['INDEX'].isin(idx)]
 	ctypes = ctypes[ctypes['Index'].isin(cols)]
 	bin = pd.concat([bin,fusions_save[cols]])

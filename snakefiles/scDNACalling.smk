@@ -11,9 +11,6 @@ CLONE_TUMOR=config['scDNA']['Tumor_clone']
 CLONE_NONTUMOR=config['scDNA']['NonTumor_clone']
 CLONES = [CLONE_TUMOR,CLONE_NONTUMOR]
 
-def get_mem_mb(wildcards, threads):
-    return threads * 1024
-
 def get_BetaBinEstimates(input, value):
     df = pd.read_csv(input, sep='\t')
     d = df.squeeze().to_dict()
@@ -34,7 +31,7 @@ rule major_clone_only_scDNACalling:
     output:
         f"{DATA}/ctypes/scDNA/majorclones_{{scDNA}}.tsv"
     shell:
-        "sed 's/Tum_[1-9]/Tum/g' {input} > {output}"
+        "sed 's/Tum_[0-9]/Tum/g' {input} > {output}"
 
 rule SplitBam_scDNACalling:
     input:
@@ -43,9 +40,7 @@ rule SplitBam_scDNACalling:
         barcodes = f"{DATA}/ctypes/scDNA/majorclones_{{scDNA}}.tsv"
     output:
         expand("{OUTDIR}/scDNACalling/SplitBam/{{scDNA}}.{clone}.bam", 
-            clone=CLONES, OUTDIR=[OUTDIR])
-    resources:
-        mem_mb = 1000
+            clone=CLONES, OUTDIR=[OUTDIR]) 
     conda:
         "envs/SComatic.yml"
     params:
@@ -75,11 +70,6 @@ rule BaseCellCounter_scDNACalling:
     output:
         tsv=f"{OUTDIR}/scDNACalling/BaseCellCounter/{{scDNA}}/{{scDNA}}.{{clone}}.tsv",
         tmp=temp(directory(f"{OUTDIR}/scDNACalling/BaseCellCounter/{{scDNA}}/temp_{{clone}}/"))
-    threads:
-        32
-    resources:
-        time = 1200,
-        mem_mb = 1000
     conda:
         "envs/SComatic.yml"
     params:
@@ -97,32 +87,29 @@ rule BaseCellCounter_scDNACalling:
         "--nprocs {threads} --tmp_dir {output.tmp} --min_mq {params.mapq} "
         "--min_dp {params.min_dp} --min_cc {params.min_cc}"
 
-rule CreateInputTsvListBetaBin_scDNACalling:
-    input:
-        expand(f"{OUTDIR}/scDNACalling/BaseCellCounter/{{scDNA}}/{{scDNA}}.{{clone}}.tsv", 
-            scDNA = SMPL, clone=[CLONE_TUMOR])
-    output:
-        f"{OUTDIR}/scDNACalling/BaseCellCounter/BaseCellCounter_files.txt"
-    run:
-        with open(output[0], "w") as out:
-            for i in input:
-                out.write(i+'\n')
+# rule CreateInputTsvListBetaBin_scDNACalling:
+#     input:
+#         expand(f"{OUTDIR}/scDNACalling/BaseCellCounter/{{scDNA}}/{{scDNA}}.{{clone}}.tsv", 
+#             scDNA = SMPL, clone=[CLONE_TUMOR])
+#     output:
+#         f"{OUTDIR}/scDNACalling/BaseCellCounter/BaseCellCounter_files.txt"
+#     run:
+#         with open(output[0], "w") as out:
+#             for i in input:
+#                 out.write(i+'\n')
     
-rule BetaBinEstimation_scDNACalling:
-    input:
-        f"{OUTDIR}/scDNACalling/BaseCellCounter/BaseCellCounter_files.txt"
-    output:
-        f"{OUTDIR}/scDNACalling/BetaBinEstimates.txt"
-    resources:
-        time = 1200,
-        mem_mb = 10000
-    conda:
-        "envs/SComatic.yml"
-    params:
-        scomatic=SCOMATIC_PATH,
-    shell:
-        "python {params.scomatic}/BetaBinEstimation/BetaBinEstimation.py "
-        "--in_tsv {input} --outfile {output}"
+# rule BetaBinEstimation_scDNACalling:
+#     input:
+#         f"{OUTDIR}/scDNACalling/BaseCellCounter/BaseCellCounter_files.txt"
+#     output:
+#         f"{OUTDIR}/scDNACalling/BetaBinEstimates.txt"
+#     conda:
+#         "envs/SComatic.yml"
+#     params:
+#         scomatic=SCOMATIC_PATH,
+#     shell:
+#         "python {params.scomatic}/BetaBinEstimation/BetaBinEstimation.py "
+#         "--in_tsv {input} --outfile {output}"
 
 rule MergeCounts_scDNACalling:
     input:
@@ -130,9 +117,6 @@ rule MergeCounts_scDNACalling:
             clone=CLONES, OUTDIR=[OUTDIR])
     output:
         tsv = f"{OUTDIR}/scDNACalling/MergeCounts/{{scDNA}}.BaseCellCounts.AllCellTypes.tsv"
-    resources:
-        time = 120,
-        mem_mb = 4000
     conda:
         "envs/SComatic.yml"
     params:
@@ -148,9 +132,6 @@ rule BaseCellCalling_step1_scDNACalling:
         tsv = f"{OUTDIR}/scDNACalling/MergeCounts/{{scDNA}}.BaseCellCounts.AllCellTypes.tsv"
     output:
         f"{OUTDIR}/scDNACalling/BaseCellCalling/{{scDNA}}.calling.step1.tsv"
-    resources:
-        time = 120,
-        mem_mb = 4000
     conda:
         "envs/SComatic.yml"
     params:
@@ -178,9 +159,6 @@ rule BaseCellCalling_step2_scDNACalling:
         f"{OUTDIR}/scDNACalling/BaseCellCalling/{{scDNA}}.calling.step2.tsv"
     conda:
         "envs/SComatic.yml"
-    resources:
-        time = 120,
-        mem_mb = 8000
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/scDNACalling/BaseCellCalling",
@@ -204,9 +182,6 @@ rule BaseCellCalling_step3_scDNACalling:
         f"{OUTDIR}/scDNACalling/BaseCellCalling/{{scDNA}}.calling.step3.tsv"
     conda:
         "envs/SComatic.yml"
-    resources:
-        time = 120,
-        mem_mb = 8000
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/scDNACalling/BaseCellCalling",
@@ -239,9 +214,6 @@ rule SingleCellGenotype_scDNACalling:
         "envs/SComatic.yml"
     threads:
         32
-    resources:
-        time = 120,
-        mem_mb = 1000
     params:
         scomatic=SCOMATIC_PATH,
         outdir=f"{OUTDIR}/scDNACalling/SingleCellGenotype",

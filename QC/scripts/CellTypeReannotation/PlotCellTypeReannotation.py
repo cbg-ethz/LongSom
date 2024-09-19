@@ -38,32 +38,12 @@ def PlotCellTypeReannotation(umap,reannotation,binary,id,out_prefix):
 						   '#ef5350':'#ef5350',
 						   '#6d8cd4':'#6d8cd4'
 						   },
-				s=7,
+				s=13,
 				legend=None
 				)
 	plt.tight_layout()
 	ax.figure.savefig(out_prefix + '.UMAP.png', dpi=600, bbox_inches='tight')
 	plt.close()
-
-	TP = (len(d['cancer_cancer'])/(len(d['cancer_cancer'])+len(d['noncancer_cancer'])))*100
-	FN = (len(d['noncancer_cancer'])/(len(d['cancer_cancer'])+len(d['noncancer_cancer'])))*100
-	FP = (len(d['cancer_noncancer'])/(len(d['cancer_noncancer'])+len(d['noncancer_noncancer'])))*100
-	TN = (len(d['noncancer_noncancer'])/(len(d['cancer_noncancer'])+len(d['noncancer_noncancer'])))*100
-	array = [[TP,FP],[FN,TN]]
-
-	sns.set(font_scale=2)
-	df_cm = pd.DataFrame(array, index = ['Cancer','NonCancer'],
-					  columns = ['Cancer','NonCancer'])
-	plt.figure(figsize = (6,6), dpi=600)
-	ax = sns.heatmap(df_cm, annot=True, cmap='RdPu', vmax =100, annot_kws={"fontsize":25}, fmt='.1f',cbar=True)
-	ax.set_title('Patient {}'.format(patient[id]), y=1.35)
-	ax.set_ylabel('Marker-based\nAnnotation', size = 25)
-	ax.set_xlabel('Reannotation', size = 25)
-	ax.xaxis.set_label_coords(0.5, 1.3)
-	ax.yaxis.set_label_coords(-0.2, 0.5)
-	plt.tick_params(axis='both', which='major', labelbottom = False, bottom=False, top = False, labeltop=True)
-	plt.tight_layout()
-	ax.figure.savefig(out_prefix + '.Heatmap.png', dpi=600, bbox_inches='tight')
 
 	# Plotting the mean of covered  SNVs mutated per cell
 	binary = pd.read_csv(binary, sep='\t',index_col=0, na_values=[3])
@@ -79,6 +59,51 @@ def PlotCellTypeReannotation(umap,reannotation,binary,id,out_prefix):
 
 	boxplot = pd.DataFrame(boxplot)
 	boxplot.to_csv(out_prefix + '.boxplot.tsv', sep='\t')
+
+	umap['ColorBurden'] = umap['Barcode'].map(dict(zip(boxplot['Barcode'],boxplot['Total SNVs Mutated'])))
+	umap = umap[umap['Color'].isin(['#2a9df4','#ef9a9a'])]
+
+	plt.figure(figsize = (4,4), dpi=600)
+	cmap= sns.color_palette("viridis", as_cmap=True)
+	ax = sns.scatterplot(data=umap,
+				x='UMAP_1',
+				y='UMAP_2',
+				hue = 'ColorBurden',
+				style='Color',
+    			markers=['o','s'],
+				s=10,
+				palette = cmap,
+				legend=None
+				)
+	sm = plt.cm.ScalarMappable(cmap= cmap, norm=None)
+	cbar = plt.colorbar(sm, ax = plt.gca())
+	cbar.set_label('Mutated Fraction')
+	plt.tight_layout()
+	ax.figure.savefig(out_prefix + '.UMAPBurden.png', dpi=600, bbox_inches='tight')
+	plt.close()
+
+	TP = (len(d['cancer_cancer'])/(len(d['cancer_cancer'])+len(d['noncancer_cancer'])))*100
+	FN = (len(d['noncancer_cancer'])/(len(d['cancer_cancer'])+len(d['noncancer_cancer'])))*100
+	FP = (len(d['cancer_noncancer'])/(len(d['cancer_noncancer'])+len(d['noncancer_noncancer'])))*100
+	TN = (len(d['noncancer_noncancer'])/(len(d['cancer_noncancer'])+len(d['noncancer_noncancer'])))*100
+	array = [[TP,FP],[FN,TN]]
+
+	sns.set(font_scale=2)
+	df_cm = pd.DataFrame(array, index = ['Cancer','NonCancer'],
+					  columns = ['Cancer','NonCancer'])
+	print(df_cm)
+	plt.figure(figsize = (6,6), dpi=600)
+	ax = sns.heatmap(df_cm, annot=True, cmap='RdPu', vmax =100, annot_kws={"fontsize":25}, fmt='.1f',cbar=True)
+	ax.set_title('Patient {}'.format(patient[id]), y=1.35)
+	ax.set_ylabel('Marker-based\nAnnotation', size = 25)
+	ax.set_xlabel('Reannotation', size = 25)
+	ax.xaxis.set_label_coords(0.5, 1.3)
+	ax.yaxis.set_label_coords(-0.2, 0.5)
+	plt.tick_params(axis='both', which='major', labelbottom = False, bottom=False, top = False, labeltop=True)
+	plt.tight_layout()
+	ax.figure.savefig(out_prefix + '.Heatmap.png', dpi=600, bbox_inches='tight')
+	plt.close()
+
 
 def bc_to_colors(bc,colors,d_rev):
 	try:

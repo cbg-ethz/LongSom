@@ -3,8 +3,9 @@
 import timeit
 import argparse
 import pandas as pd
+import numpy as np
 	
-def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,min_ac_reads,clust_dist):
+def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,min_ac_reads,min_ac_cells,clust_dist):
 
 	#---
 	# Command to focus only on high confidence cancer variants (HCCV)
@@ -26,14 +27,23 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,mi
 			else:
 				break
 	f2.write('##INFO=FINAL_FILTER,Description=Final ilter status, including chrM contaminants and clustered sites\n')
-	f3.write('##INFO=FINAL_FILTER,Description=Final ilter status, including chrM contaminants and clustered sites\n')		
+	f3.write('##INFO=FINAL_FILTER,Description=Final ilter status, including chrM contaminants and clustered sites\n')	
 	f2.close()
 	f3.close()
+
 	
 	input_df = pd.read_csv(file, sep='\t',comment='#',names=output_column_names)
-	input_df['INDEX'] = input_df['#CHROM'] + ':' + input_df['Start'].astype(str) + ':' + input_df['ALT'].str.split(',', n=1, expand=True)[0]
-	#Filtering multiallelic sites
-	input_df = input_df[~input_df['VAF'].str.contains('\|')]	
+	input_df['INDEX'] = input_df['#CHROM'].astype(str) + ':' + input_df['Start'].astype(str) + ':' + input_df['ALT'].str.split(',', n=1, expand=True)[0]
+	
+	# Only keeping sites with alternative reads in cancer
+	input_df = input_df[input_df['Cell_types']!='NonCancer']
+
+	# Filtering multiallelic sites, keeping only one allele if it's 50x larger than the other
+	# Otherwise deleting the line (it messes with filters later on)
+	# This is important as SComatic will often detect low expr secondary alt allele in very high expr. (e.g. in chrM)
+	input_df[['ALT', 'FILTER', 'Cell_types', 'Bc', 'Cc', 'VAF', 'CCF','MultiAllelic_filter']] =  input_df.apply(lambda x: MultiAllelic_filtering(x['ALT'], x['FILTER'], x['Cell_types'],x['Bc'], x['Cc'], x['VAF'], x['CCF']), axis=1, result_type="expand") 
+	input_df = input_df[input_df['MultiAllelic_filter']=='KEEP']
+	input_df = input_df[output_column_names + ['INDEX']]
 
 	#Special case for chrM due to contaminants:
 	if chrM_conta == 'True':
@@ -42,34 +52,64 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaCCF,cancer,chrM_conta,mi
 		input_df = input_df[input_df['#CHROM']!='chrM']
 		# Filtering homopolymeres, GnomAD/RNA editing/PON/clustered sites, 
 		# multiallelic sites and sites with unsufficient # celltypes covered
-		chrm_df = chrm_df[~chrm_df['FILTER'].str.contains('Min|LR|gnomAD|LC|RNA|llel', regex=True)]
+		chrm_df = chrm_df[~chrm_df['FILTER'].str.contains('Min|LR|gnomAD|LC|RNA', regex=True)]
 		if len(chrm_df)>0:
 			# Applying deltaVAF and deltaCCF filters
-			chrm_df['FINAL_FILTER'] = chrm_df.apply(lambda x: 
+			chrm_df['FILTER'] = chrm_df.apply(lambda x: 
 				chrM_filtering(x['Cell_types'],x['Dp'],x['VAF'], x['CCF'],deltaVAF,deltaCCF,cancer), axis=1)
 		else:
-			chrM_conta == 'False'
-	
-	#Filter mutations found in cancer cells
-	input_df = input_df[input_df['Cell_types'] == cancer]
-	#Filtering min alt reads:
-	input_df = input_df[input_df['Bc'].astype(int)>=min_ac_reads]
+			chrM_conta = 'False'
 
-
-	#Filtering out SNVs close to each other (likely mismapping or CNV event)
-	input_df['FINAL_FILTER'] = tag_clustered_SNVs(input_df, clust_dist)
+	# Filter 1: Non-cancer coverage filter
+	input_df = input_df[~input_df['FILTER'].str.contains('Min_cell_types')]
 	
-	#Special case for chrM due to contaminants:
+	# Filter 2: Alt reads and cells in cancer filter
+	input_df['Bc'] = [i.split(',')[1] if ',' in i else i for i in input_df['Bc']] #only keeping cancer info
+	input_df['Cc'] = [i.split(',')[1] if ',' in i else i for i in input_df['Cc']] #only keeping cancer info
+	input_df = input_df.astype({'Bc':'int','Cc':'int'})
+	input_df = input_df[input_df['Bc']>=min_ac_reads]
+	input_df = input_df[input_df['Cc']>=min_ac_cells]
+
+	# Filter 3: Betabinomial filter in cancer cells
+	input_df = input_df[~input_df['Cell_type_Filter'].str.contains(',Non-Significant|,Low-Significant', regex = True)]
+	input_df = input_df[~input_df['Cell_type_Filter'].isin(['Non-Significant','Non-Significant'])]
+	
+	#Adding chrM SNVs detected above:
+	if chrM_conta == 'True':
+		unfiltered_df = pd.concat([input_df,chrm_df])
+		unfiltered_df.to_csv(out_prefix+ '.calling.step3.unfiltered.tsv', sep='\t', index=False,  mode='a')
+	else:
+		input_df.to_csv(out_prefix+ '.calling.step3.unfiltered.tsv', sep='\t', index=False,  mode='a')
+
+	# Filter 4: Noise filter:
+	input_df = input_df[~input_df['FILTER'].str.contains('Noisy_site')] #multi allelic sites are filtered above
+	
+	# Filter 5: Homopolymer filter:
+	input_df = input_df[~input_df['FILTER'].str.contains('LC_Upstream|LC_Downstream', regex = True)] #multi allelic sites are filtered above
+	
+	# Filter 6:RNA-Editing filter
+	input_df = input_df[~input_df['FILTER'].str.contains('RNA_editing_db', regex = True)]
+
+	# Filter 7: PoN filter
+	input_df = input_df[~input_df['FILTER'].str.contains('PoN', regex = True)]
+	
+	# Filter 8: Betabinomial filter in non-cancer cells
+	input_df = input_df[~input_df['Cell_type_Filter'].str.contains('Low-Significant,|PASS,', regex = True)]
+	input_df = input_df[~input_df['FILTER'].str.contains('Cell_type_noise|Multiple_cell_types|Noisy_site', regex = True)]
+
+	# Filter 9: gnomAD filter
+	input_df = input_df[~input_df['FILTER'].str.contains('gnomAD', regex = True)]
+
+	# Filter 10: Distance filter
+	input_df['FILTER'] = tag_clustered_SNVs(input_df, clust_dist)
+	input_df = input_df[~input_df['FILTER'].str.contains('dist', regex = True)]
+	
+	#Adding chrM SNVs detected above:
 	if chrM_conta == 'True':
 		input_df = pd.concat([input_df,chrm_df])
 
-	#Only keep one ALT base in case it's duplicated 
-	input_df['ALT'] = input_df['ALT'].str.split(',').str[0]
-
-	input_df.to_csv(out_prefix+ '.calling.step3.unfiltered.tsv', sep='\t', index=False,  mode='a')
-
-	#Filtering PASS SNVs
-	filtered_df = input_df[input_df['FINAL_FILTER'] =='PASS']
+	#Filtering PASS SNVs (only left in chrM)
+	filtered_df = input_df[input_df['FILTER'] =='PASS']
 
 	# Write output
 	filtered_df.to_csv(out_prefix+ '.calling.step3.tsv', sep='\t', index=False,  mode='a')
@@ -115,10 +155,68 @@ def chrM_filtering(CTYPES,DP,VAF,CCF,deltaVAFmin,deltaCCFmin,cancer):
 			return 'NonCancer'
 		elif int(DP)<50:
 			return 'LowDepth'
+		elif float(VAF)<0.1:
+			return 'LowVAF'
 		elif float(CCF)<0.1:
 			return 'LowCCF'
 		else:
 			return 'PASS'
+
+def MultiAllelic_filtering(ALT, FILTER, CTYPES, BC, CC, VAF, CCF):
+
+	if len(ALT.split('|'))>1:
+		if len(CTYPES.split(','))>1:
+			if len(BC.split(',')[1].split('|'))>1:
+				BCS = [int(i) for i in BC.split(',')[1].split('|')]
+				MAX = max(BCS)
+				index = np.argmax(BCS)
+				BCS[index] = 0 # removing max to select next "max"
+				MAX2 = max(BCS)
+				if not(MAX2/MAX<0.02): # one alt 50x larger than the other)
+					return ALT, FILTER, CTYPES, BC, CC, VAF, CCF,'DELETE'
+			else:
+				return ALT, FILTER, CTYPES, BC, CC, VAF, CCF,'DELETE'
+				
+			ALT_Cancer = ALT.split(',')[1].split('|')[index]
+			BC_Cancer = BC.split(',')[1].split('|')[index]
+			CC_Cancer = CC.split(',')[1].split('|')[index]
+			VAF_Cancer = VAF.split(',')[1].split('|')[index]
+			CCF_Cancer = CCF.split(',')[1].split('|')[index]
+			try:
+				ALT_NonCancer = ALT.split(',')[0].split('|')[index]
+				BC_NonCancer = BC.split(',')[0].split('|')[index]
+				CC_NonCancer = CC.split(',')[0].split('|')[index]
+				VAF_NonCancer = VAF.split(',')[0].split('|')[index]
+				CCF_NonCancer = CCF.split(',')[0].split('|')[index]
+			except:
+				ALT_NonCancer = ALT.split(',')[0].split('|')[0]
+				BC_NonCancer = BC.split(',')[0].split('|')[0]
+				CC_NonCancer = CC.split(',')[0].split('|')[0]
+				VAF_NonCancer = VAF.split(',')[0].split('|')[0]
+				CCF_NonCancer = CCF.split(',')[0].split('|')[0]
+			ALT = ','.join([ALT_NonCancer,ALT_Cancer])
+			BC = ','.join([BC_NonCancer,BC_Cancer])
+			CC = ','.join([CC_NonCancer,CC_Cancer])
+			VAF = ','.join([VAF_NonCancer,VAF_Cancer])
+			CCF = ','.join([CCF_NonCancer,CCF_Cancer])
+			return ALT, FILTER, CTYPES, BC, CC, VAF, CCF,'KEEP'
+		else:
+			BCS = [int(i) for i in BC.split('|')]
+			if min(BCS)/max(BCS)<0.02: # one alt 50x larger than the other)
+				index = np.argmax(BCS)
+			else:
+				return ALT, FILTER, CTYPES, BC, CC, VAF, CCF,'DELETE'
+				
+			ALT = ALT.split('|')[index]
+			BC = BC.split('|')[index]
+			CC = CC.split('|')[index]
+			VAF = VAF.split('|')[index]
+			CCF = CCF.split('|')[index]
+			return ALT, FILTER, CTYPES, BC, CC, VAF, CCF,'KEEP'
+	else:	
+		if 'Multi-allelic' in FILTER: #Dissonant alleles
+			return ALT, FILTER, CTYPES, BC, CC, VAF, CCF,'DELETE'
+		return ALT, FILTER, CTYPES, BC, CC, VAF, CCF,'KEEP'
 	
 def tag_clustered_SNVs(df, clust_dist):
 	df2 = df[df['FILTER']=='PASS']
@@ -139,11 +237,11 @@ def tag_clustered_SNVs(df, clust_dist):
 				trash.append(':'.join([chr,pos,base]))
 				trash.append(':'.join([chr2,pos2,base2]))
 	trash = set(trash)
-	print(df.head())
-	df['FINAL_FILTER'] = df.apply(lambda x : 
+	updated_filter= df.apply(lambda x : 
 							   modify_filter(x['INDEX'],x['FILTER'], clust_dist, trash),
 							   axis=1)
-	return df['FINAL_FILTER']
+	print(updated_filter)
+	return updated_filter
 
 def modify_filter(INDEX, FILTER, clust_dist, trash):
 	clustered = 'Clust_dist{}'.format(str(clust_dist))
@@ -163,7 +261,8 @@ def initialize_parser():
 	parser.add_argument('--deltaCCF', type=float, default = 0.3, help='Delta CCF (cancer cell fraction) between cancer and non-cancer cells', required = True)
 	parser.add_argument('--cancer_ctype', type=str, default = '', help='Name of cancer cell type in meta file', required = False)
 	parser.add_argument('--chrM_contaminant', type=str, default = 'True', help='Use this option if chrM contaminants are observed in non-cancer cells', required = False)
-	parser.add_argument('--min_ac_reads', type=int, default = 5, help='Minimum ALT reads', required = False)
+	parser.add_argument('--min_ac_reads', type=int, default = 2, help='Minimum ALT reads', required = False)
+	parser.add_argument('--min_ac_cells', type=int, default = 3, help='Minimum mutated cells', required = False)
 	parser.add_argument('--clust_dist', type=int, default = 5, help='Minimum distance required between two consecutive SNVs', required = False)
 	return (parser)
 
@@ -180,11 +279,12 @@ def main():
 	cancer_ctype = args.cancer_ctype
 	chrM_conta = args.chrM_contaminant
 	min_ac_reads = args.min_ac_reads
+	min_ac_cells = args.min_ac_cells
 	clust_dist = args.clust_dist
 
 	# 1.1: Step 3: Filter only PASS mutations, not within clust_dist of each other, and apply specific chrM filters
 	print ('\n- Variant calling step 3\n')
-	variant_calling_step3(infile,out_prefix,deltaVAF,deltaCCF,cancer_ctype,chrM_conta,min_ac_reads,clust_dist)
+	variant_calling_step3(infile,out_prefix,deltaVAF,deltaCCF,cancer_ctype,chrM_conta,min_ac_reads,min_ac_cells,clust_dist)
 
 #-------------------------
 # Running scRNA somatic variant calling

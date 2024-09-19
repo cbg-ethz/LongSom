@@ -202,7 +202,10 @@ def variant_calling_step1(file,alpha1,beta1,alpha2,beta2,min_ac_cells,min_ac_rea
 								Alt_cc_p_dict_sig = [x for x in Alt_cc_p_dict.keys() if Alt_cc_p_dict[x] < 0.001]
 
 								#CHANGE : alternative ONLY if BOTH cells and reads are significant
-								Alt_candidates = sorted([i for i in Alt_bc_p_dict_sig if i in Alt_cc_p_dict_sig])
+								#Alt_candidates = sorted([i for i in Alt_bc_p_dict_sig if i in Alt_cc_p_dict_sig])
+
+								#Alt_candidates = sorted(list(set(Alt_bc_p_dict_sig + Alt_cc_p_dict_sig)))
+								Alt_candidates = sorted(Alt_bc_p_dict)
 
 								if (len(Alt_candidates) > 0):
 									# Updating required lists for calling
@@ -257,8 +260,10 @@ def variant_calling_step1(file,alpha1,beta1,alpha2,beta2,min_ac_cells,min_ac_rea
 									# Check if position passes or not
 									# Cell type variant calling
 									# 1. Check if both read counts (base counts) and cell counts passed the p-value filters
-									if not (min(P_BC) < 0.001 and min(P_CC) < 0.001):
-										Filter.append('BetaBin_problem')
+									if min(P_BC) >= 0.05 or min(P_CC) >= 0.05: #check for any sig. test
+										Filter.append('Non-Significant')
+									elif 0.001 < min(P_BC) < 0.05 or  0.001 < min(P_CC) < 0.05: #check for any sig. test
+										Filter.append('Low-Significance')
 									elif len(Alt_candidates) > 1: # Check for multiallelic sites
 										Filter.append('Multi-allelic')
 									elif int(c) < min_ac_cells: # Check number of cells supporting alternative allele
@@ -300,6 +305,7 @@ def variant_calling_step1(file,alpha1,beta1,alpha2,beta2,min_ac_cells,min_ac_rea
 
 						# 1. Filter for how many pass cell types we have
 						PASS = [x for x in Filter if x == 'PASS']
+						NONSIG = [x for x in Filter if x == 'Non-Significant']
 						if (len(PASS) > max_cell_types):
 							FILTER.append('Multiple_cell_types')
 
@@ -313,7 +319,7 @@ def variant_calling_step1(file,alpha1,beta1,alpha2,beta2,min_ac_cells,min_ac_rea
 							FILTER.append('Min_cell_types')
 
 						# 4. Cell type noise
-						if (len(Filter) - len(PASS) > 0):
+						if (len(Filter) - len(PASS) - len(NONSIG) > 0):
 							FILTER.append('Cell_type_noise')
 
 						# 5. Noisy site

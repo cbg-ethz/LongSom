@@ -1,0 +1,22 @@
+specific:
+  workdir: "/cluster/work/bewi/members/dondia/projects/long_reads_tree/chrM_conta_valid"
+  scripts: "/cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/ctat_mut/chrM_conta_valid"
+  genome: "/cluster/work/bewi/members/dondia/projects/ovarian_cancer/reference/hg38.fa"
+
+samples:
+  Patient1_Tum:
+    ids: [1,2,3,4]
+    cellranger_folder: "/cluster/work/bewi/members/dondia/projects/ovarian_cancer/10x_data/B486_Tumor_1000cells/cellranger_run/B486_Tumor_1000cells/outs"
+  Patient1_Om:
+    ids: [1,2] 
+    cellranger_folder: "/cluster/work/bewi/members/dondia/projects/ovarian_cancer/10x_data/B486_Omentum_Distal_1000cells/cellranger_run/B486_Omentum_Distal_1000cells/outs"
+  Patient2_Tum:
+    ids: [1,2,3,4]
+    cellranger_folder: "/cluster/work/bewi/members/dondia/projects/ovarian_cancer/10x_data/B497_Tumor/analysis/cellranger_run/B497_Tumor/outs"
+  Patient3_Tum:
+    ids: [1,2,3,4]
+    cellranger_folder: "/cluster/work/bewi/members/dondia/projects/ovarian_cancer/10x_data/B500_Tumor/analysis/cellranger_run/B500_Tumor/outs"
+  Patient3_Om:
+    ids: [1,2]
+    cellranger_folder: "/cluster/work/bewi/members/dondia/projects/ovarian_cancer/10x_data/B500_Distal/analysis/cellranger_run/B500_Distal/outs"
+  

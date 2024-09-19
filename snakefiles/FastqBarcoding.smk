@@ -1,4 +1,4 @@
-### Fastq to barcoded bam
+### Workflow to barcode scIsoPrep demultiplexed fastq files with barcode in read namme
 
 import pandas as pd
 DATA=config['Global']['data']

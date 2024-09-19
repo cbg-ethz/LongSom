@@ -106,7 +106,7 @@ def run_interval(code,var_dict,meta_dict,clones,majorclones,BAM,FASTA,tmp_dir,BQ
 		REF = group[3]
 		ALT = group[4].split(',')[0]
 		CELL_TYPE_EXPECTED = group[6]
-		NUM_CELLS_WITH_MUTATION_EXPECTED = group[13]
+		NUM_CELLS_WITH_MUTATION_EXPECTED = 0
 
 		Target_sites[pos_temp] = [REF,ALT,CELL_TYPE_EXPECTED,NUM_CELLS_WITH_MUTATION_EXPECTED]
 
@@ -262,7 +262,13 @@ def build_dict_variants(variant_file,window):
 
 				# Chromosome
 				CHROM = elements[0]
-
+				if 'chr' not in str(CHROM):
+					if CHROM =='MT':
+						CHROM = 'chrM'
+					else:
+						CHROM = 'chr' + str(CHROM)
+				elements[0] = CHROM
+				line = '\t'.join(elements)
 				# Position
 				POS = int(elements[1])
 				WIND = math.floor(POS / float(window))
@@ -272,7 +278,6 @@ def build_dict_variants(variant_file,window):
 					DICT_variants[CODE] = [line]
 				else:
 					DICT_variants[CODE].append(line)
-
 	return (DICT_variants)
 
 def concatenate_sort_clonetemp_files_and_write(out_prefix, tmp_dir, clones, majorclones,):

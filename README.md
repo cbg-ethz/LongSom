@@ -24,7 +24,8 @@ cd LongSom
 ### Create a conda environment with Snakemake
 Install Snakemake: 
 ```bash
-mamba  create  -c  conda-forge  -c  bioconda  -n  LongSom  snakemake
+conda install -n base -c conda-forge mamba
+mamba create -c conda-forge -c bioconda -n LongSom snakemake snakemake-executor-plugin-slurm
 ```
 Using Mamba is highly recommended, for more information. visit [Snakemake's installation guide](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html).
 

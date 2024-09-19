@@ -6,21 +6,35 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def PlotPoNComparison(indir,outfile):
+def PlotSRComparison(indir,outfile):
 	dfs = []
 	for tsv in glob.glob(indir+'/*.tsv'):
 		df = pd.read_csv(tsv, sep='\t')
 		dfs.append(df)
 
 	df_plot = pd.concat(dfs)
-	df_plot['Percentage'].round(2)
-	df_plot = df_plot.sort_values(['SampleID'])
-	df_plot = df_plot[df_plot['SampleID']!='P2']
+	d = {'LR':{},'SR': {}, 'Common':{}}
+	lists = []
+	for seq in ['LR','SR','Common']:
+		for categ in ['PASS','GERM','SUPP','NOTUM_HIGHCOV']:
+			d[seq][categ] = df_plot[df_plot['Sequencing Technology']==seq][categ].sum()
+		TOT = sum(d[seq].values())
+		FRAC_SUP = (d[seq]['PASS'])/TOT
+		FRAC_GERM= (d[seq]['GERM'])/TOT
+
+		lists.append([seq,'Fraction of SNVs\nSupported as Somatic',FRAC_SUP])
+		lists.append([seq,'Fraction of SNVs\nSupported as Germline',FRAC_GERM])
+
+
+	headers =['Sequencing Technology','scDNA Support','Fraction']
+	
+	df_plot = pd.DataFrame(lists, columns=headers)
+
 
 	ax = sns.barplot(
-		x='SampleID',
-		y='Percentage', 
-		hue='Method',
+		x='scDNA Support',
+		y='Fraction', 
+		hue='Sequencing Technology', 
 		data=df_plot, 
 		ci="sd", 
 		edgecolor="black",
@@ -30,12 +44,21 @@ def PlotPoNComparison(indir,outfile):
 		alpha=0.5
 	)
 
-	ax.set_xlabel("Patient",fontsize=18)
-	ax.set_ylabel("Fraction of SNV loci\nfiltered by matched PoN_LR",fontsize=18)
+	sns.stripplot(
+		x='scDNA Support',
+		y='Fraction', 
+		hue='Sequencing Technology', 
+		edgecolor='white',
+		legend=None, 
+		data=df_plot, 
+		dodge=True, 
+		alpha=0.8,
+		s=10, 
+		ax=ax
+	)
 
-	# remove extra legend handles
-	# handles, labels = ax.get_legend_handles_labels()
-	# ax.legend(handles[2:], labels[2:], title='With PoN LR', bbox_to_anchor=(1, 1.02), loc='upper left')
+	ax.set_ylabel("Fraction of scRNA SNVs\ndetected",fontsize=18)
+	ax.set_xlabel("scWGS Support",fontsize=18)
 	plt.tight_layout()
 	ax.figure.savefig(outfile, dpi=600, bbox_inches='tight',)
 
@@ -58,7 +81,7 @@ def main():
 	print("Outfile: " , outfile ,  "\n") 
 
 	# 1. Create clinical annotation file
-	PlotPoNComparison(indir,outfile)
+	PlotSRComparison(indir,outfile)
 
 if __name__ == '__main__':
 	start = timeit.default_timer()

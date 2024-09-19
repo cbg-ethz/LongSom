@@ -8,12 +8,26 @@ CTATFUSION =config['Run']['ctatfusion']
 
 #include: 'CellTypeReannotation.smk'
 
+import pandas as pd
+def get_BetaBinEstimates(input, value):
+    df = pd.read_csv(input, sep='\t')
+    d = df.squeeze().to_dict()
+    return d[value]
+
 rule all_SNVCalling:
     input:
         expand(f"{OUTDIR}/SNVCalling/ClusterMap/{{id}}.ClusterMap.Reannotation.pdf",
          id=IDS),
-        expand(f"{OUTDIR}/SNVCalling/Annotations/{{id}}.hg38_multianno.txt", 
-         id=IDS),
+        expand(f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step3.tsv",
+        id=IDS),
+
+rule PatientSpecificPoN:
+    input:
+        f"{OUTDIR}/PoN/PoN/PoN_LR.tsv"
+    output:
+        f"{OUTDIR}/PoN/PoN/{{id}}.PoN_LR.tsv"
+    shell:
+        "grep -v {wildcards.id} {input} > {output}"
 
 rule SplitBam:
     input:
@@ -99,17 +113,20 @@ rule BaseCellCalling_step1:
         beta1 = lambda w, input: get_BetaBinEstimates(input.bb, 'beta1'),
         alpha2 = lambda w, input: get_BetaBinEstimates(input.bb, 'alpha2'),
         beta2 = lambda w, input: get_BetaBinEstimates(input.bb, 'beta2'),
+        min_ac_reads = config['SComatic']['BaseCellCalling']['min_ac_reads'],
+        min_ac_cells = config['SComatic']['BaseCellCalling']['min_ac_cells'],
     shell:
         "python {params.scomatic}/BaseCellCalling/BaseCellCalling.step1.py "
         "--infile {input.tsv} --outfile {params.outdir}/{wildcards.id} "
         "--ref  {params.hg38} --min_cell_types {params.min_cell_types} "
+        "--min_ac_reads {params.min_ac_reads} --min_ac_cells {params.min_ac_cells} "
         "--alpha1 {params.alpha1} --beta1 {params.beta1} "
         "--alpha2 {params.alpha2} --beta2 {params.beta2} "
 
 rule BaseCellCalling_step2:
     input: 
         tsv = f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step1.tsv",
-        pon_LR = f"{OUTDIR}/PoN/PoN/PoN_LR.tsv"
+        pon_LR = f"{OUTDIR}/PoN/PoN/{{id}}.PoN_LR.tsv"
     output:
         f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step2.tsv"
     conda:
@@ -151,12 +168,14 @@ rule BaseCellCalling_step3:
         cancer = config['SNVCalling']['cancer_ctype'],
         chrm_conta = config['SComatic']['chrM_contaminant'],
         min_ac_reads = config['SNVCalling']['min_ac_reads'],
+        min_ac_cells = config['SNVCalling']['min_ac_cells'],
         clust_dist = config['SNVCalling']['clust_dist'],
     shell:
         "python {params.scomatic}/BaseCellCalling/BaseCellCalling.step3.py "
         "--infile {input.tsv} --outfile {params.outdir}/{wildcards.id} --chrM_contaminant {params.chrm_conta} "
         "--deltaVAF {params.deltaVAF} --deltaCCF {params.deltaCCF} --cancer_ctype {params.cancer} "
-        "--min_ac_reads {params.min_ac_reads} --clust_dist {params.clust_dist} "
+        "--min_ac_reads {params.min_ac_reads} --min_ac_cells {params.min_ac_cells} "
+        "--clust_dist {params.clust_dist} "
 
 rule SingleCellGenotype:
     input: 
@@ -216,31 +235,3 @@ rule clustermap:
         "--bin {input.bin} --ctypes {input.ctypes} "
         "--height {params.height} --width {params.width} "
         "--out_dir {params.outdir}/{wildcards.id}"
-
-rule input_annovar:
-    input:
-        f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step3.tsv",
-    output:
-        f"{OUTDIR}/SNVCalling/Annotations/{{id}}.avinput" 
-    shell:
-        """grep -v '#' {input} |  tr '\t' '-' | """
-        """awk -F'-' -v OFS='\t' '{{print $1,$2,$3,$4,$5,$0}}' > {output} """
-
-rule run_annovar:
-    input:
-        f"{OUTDIR}/SNVCalling/Annotations/{{id}}.avinput"
-    output:
-        f"{OUTDIR}/SNVCalling/Annotations/{{id}}.hg38_multianno.txt"
-    resources:
-        time = 120,
-        mem_mb = 8000
-    params:
-        annovar = config['Global']['annovar'],
-        outdir = f"{OUTDIR}/SNVCalling/Annotations/",
-    shell:
-        "perl {params.annovar}/table_annovar.pl {input} "
-        "-out {params.outdir}/{wildcards.id} {params.annovar}/humandb/ "
-        "-buildver hg38 -remove -nastring . -polish "
-        "-xref {params.annovar}/example/gene_xref.txt "
-        "-protocol refGene,cytoBand,exac03,avsnp147,dbnsfp30a "
-        "-operation gx,r,f,f,f "

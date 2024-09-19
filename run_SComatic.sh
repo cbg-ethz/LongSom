@@ -6,13 +6,13 @@ sbatch \
   -o logs/snakelog.$(date +%Y-%m-%d.%H-%M-%S).out \
   -e logs/snakelog.$(date +%Y-%m-%d.%H-%M-%S).err \
 snakemake \
-  -s snakefiles/QC.smk \
+  -s snakefiles/LongSom.smk \
   --configfile config/config_OvCa_LR.yml \
   --profile profile_simple/ \
-  --use-conda \
-  --use-singularity \
-  --singularity-args "-B `pwd` -B ${DATA_FOLDER}:/data -B /tmp:/tmp -B ${REF_FOLDER}:/ref:ro" \
+  --sdm conda \
   --latency-wait 30 \
   --show-failed-logs \
+  --rerun-incomplete \
+  -p \
   --rerun-triggers mtime \
-  -p 
+ "$@"

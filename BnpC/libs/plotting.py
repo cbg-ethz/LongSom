@@ -142,6 +142,18 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
     cmap = plt.get_cmap('Reds', 2)
     cmap.set_over('green')
     cmap.set_bad('grey')
+    # if not 'CNV_Colors' in ctypes.columns:
+    #     ctypes['CNV_Colors']='black'
+    # if not 'Cell_Reanno_Colors' in ctypes.columns:
+    #     ctypes['Cell_Reanno_Colors']='black'
+    # if not 'CNV_Colors' in ctypes.columns:
+
+    # if not 'Seurat_color' in ctypes.columns:
+    #     col_colors=[ctypes['CNV_Colors'],ctypes['Cell_Reanno_Colors'],cluster_cols]
+    # else:
+    #     col_colors=[ctypes['CNV_Colors'],ctypes['Seurat_color'],ctypes['Cell_Reanno_Colors'],cluster_cols]
+
+    col_colors=[ctypes['Cancer_Color'],cluster_cols]
 
     cm = sns.clustermap(
         data,
@@ -150,7 +162,7 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
         vmin=0, vmax=1,
         cmap=cmap, fmt='',
         linewidths=0, linecolor='lightgray',
-        col_colors=[ctypes['Cancer_Color'],cluster_cols],
+        col_colors=col_colors,
         row_colors= [scDNASupport_Tumor,scDNASupport_NonTumor],
         colors_ratio=(0.3, 0.3), col_cluster=False,
          row_cluster=False, figsize=(width, height)
@@ -172,14 +184,14 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
 
     try:
         cm.gs.set_width_ratios([0, 1])
-        cm.gs.set_height_ratios([0, 0.05, 0.95])
+        cm.gs.set_height_ratios([0, 0.15, 0.85])
     except ValueError:
         try:
             cm.gs.set_width_ratios([0, 0.08, 1])
-            cm.gs.set_height_ratios([0, 0, 0.05, 0.95])
+            cm.gs.set_height_ratios([0, 0, 0.15, 0.85])
         except ValueError:
             cm.gs.set_width_ratios([0, 0.08, 1])
-            cm.gs.set_height_ratios([0, 0.05, 0.95])
+            cm.gs.set_height_ratios([0,  0.15, 0.85])
     cm.gs.update(left=0.05, bottom=0.05, right=0.95, top=0.95)
 
 

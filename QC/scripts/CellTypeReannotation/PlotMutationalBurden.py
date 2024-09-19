@@ -30,7 +30,6 @@ def PlotMutationalBurden(indir,outfile1,outfile2):
 					'#6d8cd4':'#6d8cd4'
 					},
 		showfliers=False,
-		legend=None
 	)
 
 	sns.stripplot(
@@ -42,7 +41,6 @@ def PlotMutationalBurden(indir,outfile1,outfile2):
 					'#ef5350':'#ef5350',
 					'#6d8cd4':'#6d8cd4'
 					},
-		legend=None, 
 		data=df_plot, 
 		dodge=True, 
 		alpha=0.6, 
@@ -50,6 +48,7 @@ def PlotMutationalBurden(indir,outfile1,outfile2):
 	)
 	ax.set_ylabel("Fraction of SNV loci\nmutated",fontsize=18)
 	ax.set_xlabel("Patient",fontsize=18)
+	ax.get_legend().remove()
 	plt.tight_layout()
 	ax.figure.savefig(outfile1, dpi=600, bbox_inches='tight',)
 	plt.close()
@@ -66,7 +65,6 @@ def PlotMutationalBurden(indir,outfile1,outfile2):
 					'#6d8cd4':'#6d8cd4'
 					},
 		showfliers=False,
-		legend=None
 	)
 
 	sns.stripplot(
@@ -86,6 +84,7 @@ def PlotMutationalBurden(indir,outfile1,outfile2):
 	)
 	ax.set_ylabel("SNV loci mutated",fontsize=18)
 	ax.set_xlabel("Patient",fontsize=18)
+	ax.get_legend().remove()
 	plt.tight_layout()
 	ax.figure.savefig(outfile2, dpi=600, bbox_inches='tight',)
 	plt.close()

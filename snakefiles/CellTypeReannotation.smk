@@ -20,6 +20,7 @@ def get_BetaBinEstimates(input, value):
 rule all_reanno:
     input:
         expand(f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv", id=IDS),
+         expand(f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step3.tsv", id=IDS),
     
 rule SplitBam_Reanno:
     input:

@@ -96,26 +96,23 @@ def variant_calling_step2(file,distance,editing,pon_SR,pon_LR,gnomAD_db,max_gnom
 	output_df = pd.read_csv(outfile_temp,sep='\t',comment='#',names=output_column_names)
 
 	#Filtering population germlines using GnomAD v4
-	try:
-		#Retriving gnomAD database 
-		db = gnomAD_DB(gnomAD_db, gnomad_version="v4")
+	#Retriving gnomAD database 
+	db = gnomAD_DB(gnomAD_db, gnomad_version="v4")
 
-		#Formatting candidates for compatibility with gnomAD database querry
-		gnomAD_input = output_df[['#CHROM','Start','REF','ALT']]
-		gnomAD_input.columns = ['chrom','pos','ref','alt']
+	#Formatting candidates for compatibility with gnomAD database querry
+	gnomAD_input = output_df[['#CHROM','Start','REF','ALT']]
+	gnomAD_input.columns = ['chrom','pos','ref','alt']
 
-		#Querry gnomAD database	
-		gnomAD_input['gnomAD_VAF'] = db.get_info_from_df(gnomAD_input, "AF")
-		gnomAD_input['gnomAD_VAF'] = gnomAD_input['gnomAD_VAF'].replace(np.nan,0)
-		
-		#Apply gnomAD filter
-		output_df['gnomAD_VAF'] = gnomAD_input['gnomAD_VAF']
-		output_df['FILTER'] = output_df.apply(
-			lambda x: gnomAD_filter_editing(x['FILTER'], x['gnomAD_VAF'],max_gnomAD_VAF), axis=1)
-		output_df = output_df[output_column_names]
+	#Querry gnomAD database	
+	gnomAD_input['gnomAD_VAF'] = db.get_info_from_df(gnomAD_input, "AF")
+	gnomAD_input['gnomAD_VAF'] = gnomAD_input['gnomAD_VAF'].replace(np.nan,0)
 	
-	except:
-		print("Error with gnomAD filtering") 		
+	#Apply gnomAD filter
+	output_df['gnomAD_VAF'] = gnomAD_input['gnomAD_VAF']
+	output_df['FILTER'] = output_df.apply(
+		lambda x: gnomAD_filter_editing(x['FILTER'], x['gnomAD_VAF'],max_gnomAD_VAF), axis=1)
+	output_df = output_df[output_column_names]
+		
 	# Write output
 	output_df.to_csv(outfile, sep='\t', index=False,  mode='a')
 

@@ -1,3 +1,23 @@
+# LongSom config yaml file
+
+Run:
+  # Run cell type reannotation
+  reanno: True
+  # Run SNV calling with SComatic
+  scomatic: True
+  # Run SNV annotation with annovar
+  annovar: False
+  # Run cell clustering with BnpC
+  bnpc: True
+  # Run fusion calling with CTAT-LR-Fusion
+  ctatfusion: False
+  # Run CNV calling with InferCNV
+  infercnv: False
+  # Generate various plots
+  plot: False
+  # Run scDNA validation (DEV only)
+  scdna: False
+  
 Global:
   outdir: /cluster/work/bewi/members/dondia/projects/long_reads_tree/LongSom_out/OvCa_SR
   data: /cluster/work/bewi/members/dondia/projects/long_reads_tree/data/SComatic_input/OvCa_SR
@@ -34,12 +54,13 @@ CellTypeReannotation:
     Non-HGSOC: ""
   ctype_column: Automated_Cell_type
   chrM_contaminant: 'False'
-
-  min_variants: 2
-  
   HCCV:
+    min_depth: 20
     deltaVAF: 0.25
     deltaCCF: 0.4
+  Reannotation:
+    min_variants: 3
+    min_fraction: 0.25
 
 SNVCalling:
   cancer_ctype: Cancer
@@ -47,6 +68,7 @@ SNVCalling:
     Cancer: ""
     NonCancer: ""
   min_ac_reads: 3
+  min_ac_cells: 2
   clust_dist: 10000
   clustermap:
     height: 10
@@ -63,6 +85,8 @@ scDNA:
     min_ac_cells: 2
     min_ac_reads: 3
 
+scDNAValidation:
+  min_depth: 17
 
 SComatic:
   chrM_contaminant: 'True'
@@ -77,8 +101,10 @@ SComatic:
     PoN_SR: /cluster/work/bewi/members/dondia/projects/long_reads_tree/bin/SComatic/PoNs/PoN.scRNAseq.hg38.no_chr_prefix.tsv
     gnomAD_db: /cluster/work/bewi/members/dondia/projects/long_reads_tree/ref/gnomAD
     max_gnomAD_VAF: 0.01
-    deltaVAF: 0.2
-    deltaCCF: 0.35
+    deltaVAF: 0.1
+    deltaCCF: 0.3
+    min_ac_cells: 1
+    min_ac_reads: 1
 
   SingleCellGenotype:
     alt_flag: All
@@ -86,8 +112,8 @@ SComatic:
 
 BnpC:
   outdir: '3kSteps.0.001-5dpa'
-  min_cells_per_mut: 5
-  min_pos_cov: 3
+  min_cells_per_mut: 1
+  min_pos_cov: 1
   mcmc_steps: 3000
   cup: 0
   eup: 0

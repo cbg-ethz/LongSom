@@ -163,12 +163,10 @@ def run_interval(code,var_dict,meta_dict,BAM,FASTA,tmp_dir,BQ,MQ,ALT_FLAG,alpha2
 				Alt_obs = NEW_PILEUP_LIST[read_i]
 				try:
 					barcode = read_alignment.opt("CB")
+					barcode = barcode.split("-")[0]
 					ctype = meta_dict[barcode]
 				except:
 					continue
-
-				# Fix barcode
-				barcode = barcode.split("-")[0]
 
 				# Remove low quality reads: Seconday alignments, duplicate reads, supplementary alignments
 				if read_alignment.is_secondary == False and read_alignment.is_duplicate == False and read_alignment.is_supplementary == False:

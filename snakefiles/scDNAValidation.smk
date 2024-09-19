@@ -1,5 +1,6 @@
 include: 'BnpC.smk'
 include: 'QC.smk'
+include: 'scDNACalling.smk'
 
 OUTDIR=config['Global']['outdir']
 DATA=config['Global']['data']
@@ -21,19 +22,19 @@ rule all_scDNAValidation:
         #SNVCalling
         expand(f"{OUTDIR}/SNVCalling/ClusterMap/{{id}}.ClusterMap.Reannotation.pdf",
          id=IDS),
-        expand(f"{OUTDIR}/SNVCalling/Annotations/{{id}}.hg38_multianno.txt", 
-         id=IDS),
         # BnpC
         expand(f"{OUTDIR}/BnpC/{OUTBNPC}/{{id}}/genoCluster_posterior_mean_raw.pdf",
          id=IDS),
         # Reanno 
-         expand(f"{OUTDIR}/CellTypeReannotation/SingleCellGenotype/{{id}}.BinaryMatrix.tsv", 
+         expand(f"{OUTDIR}/SComatic/SingleCellGenotype/{{id}}.BinaryMatrix.tsv", 
          id=IDS),
         # QC
         f"{OUTDIR}/QC/CompareNoPoN/PoNNoPoNComparison.png",
+        f"{OUTDIR}/QC/PlotCellTypeReannotation/MeanVAF.png",
         f"{OUTDIR}/QC/PlotCellTypeReannotation/MutationalBurden.png",
+        f"{OUTDIR_SR}/Comparison/SRComparisonBoxplot.png",
         expand(f"{OUTDIR}/QC/PlotCellTypeReannotation/{{id}}.UMAP.png", id = IDS),
-        expand(f"{OUTDIR}/QC/PlotCellTypeReannotation/{{id}}.Heatmap.png", id = IDS)
+        expand(f"{OUTDIR}/QC/PlotCellTypeReannotation/{{id}}.Heatmap.png", id = IDS),
     default_target: True
 
 rule CloneGenotype_LongSom:
@@ -50,9 +51,6 @@ rule CloneGenotype_LongSom:
         "envs/SComatic.yml"
     threads:
         32
-    resources:
-        time = 120,
-        mem_mb = 8000
     params:
         qc=QC_PATH,
         outdir=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom",
@@ -73,7 +71,7 @@ rule CloneGenotype_LongSom:
 
 rule CloneGenotype_SComatic:
     input: 
-        tsv = f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step3.tsv",
+        tsv = f"{OUTDIR}/SComatic/BaseCellCalling/{{id}}.calling.step3.tsv",
         bam = f"{DATA}/bam/scDNA/{{id}}_scDNA.bam",
         bai = f"{DATA}/bam/scDNA/{{id}}_scDNA.bam.bai",
         barcodes = f"{DATA}/ctypes/scDNA/clones_{{id}}.tsv",
@@ -85,9 +83,6 @@ rule CloneGenotype_SComatic:
         "envs/SComatic.yml"
     threads:
         32
-    resources:
-        time = 120,
-        mem_mb = 8000
     params:
         qc=QC_PATH,
         outdir=f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic",
@@ -144,8 +139,6 @@ rule scDNA_supp_in_scRNA:
 
 rule ComparisonSComaticLongSom:
     input:
-        scomatic = f"{OUTDIR}/CellTypeReannotation/BaseCellCalling/{{id}}.calling.step3.tsv",
-        longsom = f"{OUTDIR}/SNVCalling/BaseCellCalling/{{id}}.calling.step3.tsv",
         scDNACalls = f"{OUTDIR}/scDNACalling/BaseCellCalling/{{id}}.calling.step3.tsv",
         scDNAValidLong = f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom/{{id}}.CloneGenotype.tsv",
         scDNAValidSCom = f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic/{{id}}.CloneGenotype.tsv",
@@ -162,19 +155,20 @@ rule ComparisonSComaticLongSom:
     params:
         qc=QC_PATH,
         outdir=f"{OUTDIR}/scDNAValidation/Plots",
+        dp=config['scDNAValidation']['min_depth'],
     shell:
         "python {params.qc}/ComparisonSComaticLongSom/ComparisonSComaticLongSom.py "
-        "--SComatic {input.scomatic} --LongSom {input.longsom} --scDNACalls {input.scDNACalls} "
+        "--id {wildcards.id}  --scDNACalls {input.scDNACalls} --dp {params.dp} "
         "--scDNAValidLong {input.scDNAValidLong} --scDNAValidSCom {input.scDNAValidSCom} "
-        " --scDNA_supp_in_scRNA {input.scDNA_supp_in_scRNA} --id {wildcards.id} "
-        "--outfile {params.outdir}/{wildcards.id} "
+        "--scDNA_supp_in_scRNA {input.scDNA_supp_in_scRNA} --outfile {params.outdir}/{wildcards.id} "
 
 rule plot_ComparisonSComaticLongSom:
     input:
         expand(f"{OUTDIR}/scDNAValidation/Plots/{{id}}.F1Scores.tsv",
          id = SMPL),
     output:
-        png = f"{OUTDIR}/scDNAValidation/Plots/F1_plot.png"
+        png1 = f"{OUTDIR}/scDNAValidation/Plots/F1_plot.png",
+        png2 = f"{OUTDIR}/scDNAValidation/Plots/scDNASupport.png"
     conda:
         "envs/BnpC.yml"
     params:
@@ -182,7 +176,7 @@ rule plot_ComparisonSComaticLongSom:
         indir=f"{OUTDIR}/scDNAValidation/Plots",
     shell:
         "python {params.qc}/ComparisonSComaticLongSom/PlotComparisonSComaticLongSom.py "
-        "--indir {params.indir} --outfile {output.png}"
+        "--indir {params.indir} "
 
 rule plot_scDNAValidation:
     input:
@@ -199,10 +193,12 @@ rule plot_scDNAValidation:
         qc=QC_PATH,
         indir1=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom",
         indir2=f"{OUTDIR}/scDNAValidation/CloneGenotype/SComatic",
+        dp=config['scDNAValidation']['min_depth'],
     shell:
         "python {params.qc}/scDNAValidation/PlotWaffleChartscDNAValid.py "
         "--indir1 {params.indir1} --indir2 {params.indir2} "
         "--outfile1 {output.png1} --outfile2 {output.png2} "
+        "--dp {params.dp}"
 
     
 

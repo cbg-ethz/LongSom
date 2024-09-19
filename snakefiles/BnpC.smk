@@ -21,7 +21,7 @@ rule FormatInputBnpC:
     input:
         bin=f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.BinaryMatrix.tsv",
         vaf=f"{OUTDIR}/SNVCalling/SingleCellGenotype/{{id}}.VAFMatrix.tsv",
-        scDNA=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom/{{id}}.CloneGenotype.tsv" if SCDNA else [],
+        scDNA=f"{OUTDIR}/scDNAValidation/CloneGenotype/LongSom/{{id}}.CloneGenotype.tsv", #if SCDNA else [],
         ctypes=f"{OUTDIR}/CellTypeReannotation/ReannotatedCellTypes/{{id}}.tsv",
     output:
         bin=f"{OUTDIR}/BnpC/BnpC_input/{{id}}.BinaryMatrix.tsv",
