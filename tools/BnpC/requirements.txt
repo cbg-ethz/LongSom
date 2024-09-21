@@ -1,0 +1,6 @@
+numpy==1.26.4
+Bottleneck==1.3.5
+pandas==2.2.2
+scikit-learn==1.5.0
+scipy==1.14.0
+seaborn==0.12.0
