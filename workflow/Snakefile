@@ -1,0 +1,29 @@
+# Define common functions and variables
+include: 'rules/common.smk'
+
+#include: 'rules/PoN.smk'
+include: 'rules/CellTypeReannotation.smk'
+include: 'rules/SNVCalling.smk'
+include: 'rules/FusionCalling.smk'
+include: 'rules/CellClustering.smk'
+#include: 'rules/InferCopyNumbers.smk'
+
+# Define results working directory
+workdir: config['User']['output_dir']
+
+rule LongSom_output:
+    input:
+        # Reannotated cell types
+        expand("CellTypeReannotation/ReannotatedCellTypes/{id}.tsv", id=IDS) if REANNO else [],
+        # Final SNV set
+        expand("SNVCalling/BaseCellCalling/{id}.calling.step3.tsv", id=IDS) if SCOMATIC else [],
+        # Fusions
+        expand("FusionCalling/Somatic/{id}.Fusions.tsv", id=IDS) if CTATFUSION else [],
+        # Cell-Variants matrix
+        expand("CellClustering/SingleCellGenotype/{id}.BinaryMatrix.tsv", id=IDS)if BNPC else [],
+        # Clonal reconstruction
+        expand("CellClustering/BnpC_output/{id}/genoCluster_posterior_mean_raw.pdf", id=IDS) if BNPC else [],
+        # CNVs
+        expand("InferCNV/InferCNV/{id}/infercnv.17_HMM_predHMMi6.leiden.hmm_mode-subclusters.png", id = IDS) if INFERCNV else [],
+    default_target: True
+    localrule: True

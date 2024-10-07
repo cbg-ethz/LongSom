@@ -5,6 +5,9 @@
 #snakemake logs folders
 .snakemake/
 logs/
+benchmarks/
 
 #Large files
-CTAT_LR_Fusion/ctat_lr_fusion.v0.10.0.simg
+ctat_lr_fusion.v0.13.0.simg
+
+*test*
