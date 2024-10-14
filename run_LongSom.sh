@@ -3,7 +3,7 @@ OUTPUT_DIR=/path/to/output_dir
 REF_DIR=path/to/LongSom/ref/GRCh38_gencode_v44_CTAT_lib_Oct292023.plug-n-play/ctat_genome_lib_build_dir
 
 snakemake \
-  -s workflow/LongSom.smk \
+  -s workflow/Snakefile \
   --configfile config/config.yaml \
   --use-conda \
   --use-singularity \

@@ -1,14 +1,12 @@
 import timeit
 import argparse
 import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 
-def filter_input(bin,vaf,ctypes,min_cells_per_mut,min_pos_cov,out_prefix):
+def filter_input(bin,vaf,barcodes,min_cells_per_mut,min_pos_cov,out_prefix):
 	bin = pd.read_csv(bin,sep='\t',index_col=0,na_values=[3,'.'])
 	vaf = pd.read_csv(vaf,sep='\t',index_col=0,na_values=[3,'.'])
-	ctypes = pd.read_csv(ctypes,sep='\t')
+	barcodes = pd.read_csv(barcodes,sep='\t')
 	#Save fusions:
 	fusions = [i for i in bin.index if '--' in i]
 	fusions_save = bin.loc[fusions,bin.columns]
@@ -25,19 +23,22 @@ def filter_input(bin,vaf,ctypes,min_cells_per_mut,min_pos_cov,out_prefix):
 	
 	# Filter all input files:
 	vaf = vaf.loc[idx,cols]
-	ctypes = ctypes[ctypes['Index'].isin(cols)]
+	barcodes = barcodes[barcodes['Index'].isin(cols)]
 	bin = pd.concat([bin,fusions_save[cols]])
+
+	# Add reanno ctype colors
+	barcodes['Cell_Reanno_Colors'] = barcodes['Reannotated_cell_type'].apply(lambda x: '#94C773' if x=='Non-Cancer' else '#8F79A1')
 	
 	# Write
 	bin.to_csv(out_prefix + '.BinaryMatrix.tsv', sep='\t')
 	vaf.to_csv(out_prefix + '.VAFMatrix.tsv', sep='\t')
-	ctypes.to_csv(out_prefix + '.Barcodes.tsv', sep='\t', index = False)
+	barcodes.to_csv(out_prefix + '.Barcodes.tsv', sep='\t', index = False)
 
 def initialize_parser():
 	parser = argparse.ArgumentParser(description='Script to filter BnpC input matrix')
 	parser.add_argument('--bin', type=str, default=1, help='SComatic binary matrix (obtained by SingleCellGenotype.py)', required = True)
 	parser.add_argument('--vaf', type=str, default=1, help='SComatic VAF matrix (obtained by SingleCellGenotype.py)', required = True)
-	parser.add_argument('--ctypes', type=str, default=1, help='Barcode to celltypes (obtained by CellTypeReannotation.py)', required = True)
+	parser.add_argument('--barcodes', type=str, default=1, help='Barcode to celltypes (obtained by CellTypeReannotation.py)', required = True)
 	parser.add_argument('--min_cells_per_mut', type=int, default=5, help='SComatic+CellTypeReannotation base calling file (obtained by BaseCellCalling.step3.py)', required = False)
 	parser.add_argument('--min_pos_cov', type=int, default=3, help='SComatic+CellTypeReannotation base calling file (obtained by BaseCellCalling.step3.py)', required = False)
 	parser.add_argument('--outfile', default = 'Matrix.tsv', help='Out file', required = False)
@@ -51,7 +52,7 @@ def main():
 
 	bin = args.bin
 	vaf = args.vaf
-	ctypes = args.ctypes
+	barcodes = args.barcodes
 	min_cells_per_mut = args.min_cells_per_mut
 	min_pos_cov = args.min_pos_cov
 	out_prefix = args.outfile
@@ -60,7 +61,7 @@ def main():
 	print("Outfile prefix: " , out_prefix ,  "\n") 
 
 	# 1. Create clinical annotation file
-	filter_input(bin,vaf,ctypes,min_cells_per_mut,min_pos_cov,out_prefix)
+	filter_input(bin,vaf,barcodes,min_cells_per_mut,min_pos_cov,out_prefix)
 
 if __name__ == '__main__':
 	start = timeit.default_timer()

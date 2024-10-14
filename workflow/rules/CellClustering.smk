@@ -57,7 +57,7 @@ else:
             tsv="SNVCalling/BaseCellCalling/{id}.calling.step3.tsv",
             bam=f"{INPUT}/bam/{{id}}.bam",
             barcodes="CellTypeReannotation/ReannotatedCellTypes/{id}.tsv",
-            fusions="FusionCalling/Somatic/{id}.Fusions.tsv" if CTATFUSION else [],
+            fusions="FusionCalling/Somatic/{id}.Fusions.SingleCellGenotype.tsv" if CTATFUSION else [],
             ref=str(workflow.basedir)+config['Reference']['genome'],
         output:
             tsv="CellClustering/SingleCellGenotype/{id}.SingleCellGenotype.tsv",
@@ -106,11 +106,11 @@ rule FormatInputBnpC:
     input:
         bin="CellClustering/SingleCellGenotype/{id}.BinaryMatrix.tsv",
         vaf="CellClustering/SingleCellGenotype/{id}.VAFMatrix.tsv",
-        ctypes="CellTypeReannotation/ReannotatedCellTypes/{id}.tsv",
+        barcodes="CellTypeReannotation/ReannotatedCellTypes/{id}.tsv",
     output:
         bin="CellClustering/BnpC_input/{id}.BinaryMatrix.tsv",
         vaf="CellClustering/BnpC_input/{id}.VAFMatrix.tsv",
-        ctypes="CellClustering/BnpC_input/{id}.Barcodes.tsv",
+        barcodes="CellClustering/BnpC_input/{id}.Barcodes.tsv",
     params:
         script=str(workflow.basedir)+"/scripts/CellClustering/FormatInputBnpC.py",
         min_cells=config['CellClust']['FormatInput']['min_cells_per_mut'],
@@ -126,7 +126,7 @@ rule FormatInputBnpC:
         python {params.script} \
         --bin {input.bin} \
         --vaf {input.vaf} \
-        --ctypes {input.ctypes} \
+        --barcodes {input.barcodes} \
         --min_pos_cov {params.min_cov} \
         --min_cells_per_mut {params.min_cells} \
         --outfile CellClustering/BnpC_input//{wildcards.id} 
@@ -136,7 +136,7 @@ rule BnpC_clustering:
     input:
         bin="CellClustering/BnpC_input/{id}.BinaryMatrix.tsv",
         vaf="CellClustering/BnpC_input/{id}.VAFMatrix.tsv",
-        ctypes="CellClustering/BnpC_input/{id}.Barcodes.tsv",
+        barcodes="CellClustering/BnpC_input/{id}.Barcodes.tsv",
     output:
         pdf="CellClustering/BnpC_output/{id}/genoCluster_posterior_mean_raw.pdf"
     params:
@@ -172,5 +172,5 @@ rule BnpC_clustering:
         -FN {params.FN} \
         -pp {params.pp} \
         -ap {params.dpa} \
-        --ctypes {input.ctypes} 
+        --barcodes {input.barcodes} 
         """

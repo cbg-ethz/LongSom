@@ -30,23 +30,21 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaMCF,chrM_conta,min_ac_re
 	f3.write('##INFO=FINAL_FILTER,Description=Final ilter status, including chrM contaminants and clustered sites\n')	
 	f2.close()
 	f3.close()
-
 	
 	input_df = pd.read_csv(file, sep='\t',comment='#',names=output_column_names)
-	input_df['INDEX'] = input_df['#CHROM'].astype(str) + ':' + input_df['Start'].astype(str) + ':' + input_df['ALT'].str.split(',', n=1, expand=True)[0]
-	
-	# Only keeping sites with alternative reads in cancer
+
+	# Only keeping sites called in cancer
 	input_df = input_df[input_df['Cell_types']!='Non-Cancer']
 
 	# Filtering multiallelic sites, keeping only one allele if it's 50x larger than the other
 	# Otherwise deleting the line (it messes with filters later on)
 	# This is important as SComatic will often detect low expr secondary alt allele in very high expr. (e.g. in chrM)
-	input_df[['ALT', 'FILTER', 'Cell_types', 'Bc', 'Cc', 'VAF', 'MCF','MultiAllelic_filter']] =  input_df.apply(lambda x: MultiAllelic_filtering(x['REF'], x['ALT'], x['FILTER'], x['Cell_types'],x['Dp'], x['Nc'], x['Bc'], x['Cc'], x['VAF'], x['MCF'], x['Cancer'], x['Non-Cancer']), axis=1, result_type="expand") 
-	input_df = input_df[input_df['MultiAllelic_filter']=='KEEP']
-	input_df = input_df[output_column_names + ['INDEX']]
+	input_df[['ALT', 'FILTER', 'Cell_types', 'Bc', 'Cc', 'VAF', 'MCF','STEP3FILTER']] =  input_df.apply(lambda x: MultiAllelic_filtering(x['REF'], x['ALT'], x['FILTER'], x['Cell_types'],x['Dp'], x['Nc'], x['Bc'], x['Cc'], x['VAF'], x['MCF'], x['Cancer'], x['Non-Cancer']), axis=1, result_type="expand") 
+	#input_df = input_df[input_df['MultiAllelic_filter']=='KEEP']
+
+	input_df['INDEX'] = input_df['#CHROM'].astype(str) + ':' + input_df['Start'].astype(str) + ':' + input_df['ALT'].str.split(',', n=1, expand=True)[0]
 
 	#Special case for chrM due to contaminants:
-
 	# Save chrM candidate SNVs to apply specific filters
 	chrm_df = input_df[input_df['#CHROM']=='chrM'].copy()
 	input_df = input_df[input_df['#CHROM']!='chrM']
@@ -55,27 +53,17 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaMCF,chrM_conta,min_ac_re
 	chrm_df = chrm_df[~chrm_df['FILTER'].str.contains('Min|LR|gnomAD|LC|RNA', regex=True)]
 	if len(chrm_df)>0:
 		# Applying deltaVAF and deltaMCF filters
-		chrm_df['FILTER'] = chrm_df.apply(lambda x: 
-			chrM_filtering(x['Cell_types'],x['Dp'],x['VAF'], x['MCF'],deltaVAF,deltaMCF), axis=1)
-
+		chrm_df['STEP3FILTER'] = chrm_df.apply(lambda x: 
+			chrM_filtering(x['STEP3FILTER'],x['Cell_types'],x['Dp'],x['VAF'], x['MCF'],deltaVAF,deltaMCF), axis=1)
 
 	# Filter 1: Non-cancer coverage filter
 	input_df = input_df[~input_df['FILTER'].str.contains('Min_cell_types')]
-	
-	# Filter 2: Alt reads and cells in cancer filter
-	input_df['Bc'] = [i.split(',')[1] if ',' in i else i for i in input_df['Bc']] #only keeping cancer info
-	input_df['Cc'] = [i.split(',')[1] if ',' in i else i for i in input_df['Cc']] #only keeping cancer info
-	input_df = input_df.astype({'Bc':'int','Cc':'int'})
-	input_df = input_df[input_df['Bc']>=min_ac_reads]
-	input_df = input_df[input_df['Cc']>=min_ac_cells]
 
-	# Filter 3: Betabinomial filter in cancer cells
-	input_df = input_df[~input_df['Cell_type_Filter'].str.contains(',Non-Significant|,Low-Significant', regex = True)]
-	input_df = input_df[~input_df['Cell_type_Filter'].isin(['Non-Significant','Low-Significant'])]
-	
-	#Adding chrM SNVs detected above:
-	unfiltered_df = pd.concat([input_df,chrm_df])
-	unfiltered_df.to_csv(out_prefix+ '.calling.step3.unfiltered.tsv', sep='\t', index=False,  mode='a')
+	#Filter 2: Min. alt reads and cells in cancer
+	input_df['STEP3FILTER'] = input_df.apply(lambda x: BC_CC_filtering(x['STEP3FILTER'],x['ALT'],x['Cancer'],min_ac_reads,min_ac_cells), axis=1)
+
+	# Filter 3 and 8: Betabinomial filtering in cancer cells (Filter 3) and non-cancer cells (Filter 8)
+	input_df['STEP3FILTER'] = input_df.apply(lambda x: BetaBino_filtering(x['STEP3FILTER'],x['Cell_types'],x['Cell_type_Filter'],x['Start']), axis=1)
 
 	# Filter 4: Noise filter:
 	input_df = input_df[~input_df['FILTER'].str.contains('Noisy_site')] #multi allelic sites are filtered above
@@ -90,26 +78,27 @@ def variant_calling_step3(file,out_prefix,deltaVAF,deltaMCF,chrM_conta,min_ac_re
 	input_df = input_df[~input_df['FILTER'].str.contains('PoN', regex = True)]
 	
 	# Filter 8: Betabinomial filter in non-cancer cells
-	input_df = input_df[~input_df['Cell_type_Filter'].str.contains('Low-Significant,|PASS,', regex = True)]
-	input_df = input_df[~input_df['FILTER'].str.contains('Cell_type_noise|Multiple_cell_types|Noisy_site', regex = True)]
+	input_df = input_df[~input_df['FILTER'].str.contains('Cell_type_noise', regex = True)]
 
 	# Filter 9: gnomAD filter
 	input_df = input_df[~input_df['FILTER'].str.contains('gnomAD', regex = True)]
 
-	# Filter 10: Distance filter
-	input_df['FILTER'] = tag_clustered_SNVs(input_df, clust_dist)
-	input_df = input_df[~input_df['FILTER'].str.contains('dist', regex = True)]
-	
 	#Adding chrM SNVs detected above:
 	input_df = pd.concat([input_df,chrm_df])
 
+	# Filter 10: Distance filter
+	input_df['STEP3FILTER'] = tag_clustered_SNVs(input_df, clust_dist)
+	input_df.to_csv(out_prefix+ '.calling.step3.unfiltered.tsv', sep='\t', index=False,  mode='a')
+	input_df = input_df[~input_df['STEP3FILTER'].str.contains('dist', regex = True)]
+
 	#Filtering PASS SNVs (only left in chrM)
-	filtered_df = input_df[input_df['FILTER'] =='PASS']
+	filtered_df = input_df[input_df['STEP3FILTER'] =='PASS']
 
 	# Write output
 	filtered_df.to_csv(out_prefix+ '.calling.step3.tsv', sep='\t', index=False,  mode='a')
+
 	
-def chrM_filtering(CTYPES,DP,VAF,MCF,deltaVAFmin,deltaMCFmin):
+def chrM_filtering(STEP3FILTER,CTYPES,DP,VAF,MCF,deltaVAFmin,deltaMCFmin):
 	ctypes = CTYPES.split(',')
 	if len(ctypes)>1:
 		if ctypes[0]=='Cancer':
@@ -121,7 +110,10 @@ def chrM_filtering(CTYPES,DP,VAF,MCF,deltaVAFmin,deltaMCFmin):
 		DP1,DP2=DP.split(',')
 		#Only look at higher depth loci
 		if int(DP1)<100 or int(DP2)<100: 
-			return 'LowDepth'
+			if STEP3FILTER == 'PASS':
+				return 'LowDepth'
+			else:
+				return STEP3FILTER+',LowDepth'
 		else: 
 			VAFs = VAF.split(',')
 			MCFs = MCF.split(',')
@@ -135,24 +127,38 @@ def chrM_filtering(CTYPES,DP,VAF,MCF,deltaVAFmin,deltaMCFmin):
 			
 			# mtSNVs are variants with high VAF in cancer and low VAF in non-cancer cells
 			if deltaVAF < deltaVAFmin:
-				return 'LowDeltaVAF'
+				if STEP3FILTER == 'PASS':
+					return 'LowDeltaVAF'
+				else:
+					return STEP3FILTER+',LowDeltaVAF'
+
 		
 			elif deltaMCF < deltaMCFmin:
-				return 'LowDeltaMCF'
+				if STEP3FILTER == 'PASS':
+					return 'LowDeltaMCF'
+				else:
+					return STEP3FILTER+',LowDeltaMCF'
 			else:
-				return 'PASS'
+				return STEP3FILTER
 
 	elif len(ctypes)==1:
-		if ctypes[0]!="Cancer":
-			return 'Non-Cancer'
-		elif int(DP)<100:
-			return 'LowDepth'
+		if int(DP)<100:
+			if STEP3FILTER == 'PASS':
+				return 'LowDepth'
+			else:
+				return STEP3FILTER+',LowDepth'
 		elif float(VAF)<0.05:
-			return 'LowVAF'
+			if STEP3FILTER == 'PASS':
+				return 'LowVAF'
+			else:
+				return STEP3FILTER+',LowVAF'
 		elif float(MCF)<0.05:
-			return 'LowMCF'
+			if STEP3FILTER == 'PASS':
+				return 'LowMCF'
+			else:
+				return STEP3FILTER+',LowMCF'
 		else:
-			return 'PASS'
+			return STEP3FILTER
 
 def MultiAllelic_filtering(REF, ALT, FILTER, CTYPES, DP, NC, BC, CC, VAF, MCF, CancerInfo, NonCancerInfo):
 	ref_dict = {'A':0, 'C':1, 'T':2, 'G':3}
@@ -174,8 +180,6 @@ def MultiAllelic_filtering(REF, ALT, FILTER, CTYPES, DP, NC, BC, CC, VAF, MCF, C
 			index = np.argmax(BCS)
 			BCS[index] = 0 # removing max to select next "max"
 			MAX2 = max(BCS)
-			if not(MAX2/MAX<0.05): # one alt 20x larger than the other)
-				return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'DELETE'
 
 			ALT_Cancer = 'ACTG'[index]
 			BC_Cancer = int(CancerInfo.split('|')[3].split(':')[index])
@@ -195,42 +199,89 @@ def MultiAllelic_filtering(REF, ALT, FILTER, CTYPES, DP, NC, BC, CC, VAF, MCF, C
 			VAF = ','.join([str(VAF_NonCancer),str(VAF_Cancer)])
 			MCF = ','.join([str(MCF_NonCancer),str(MCF_Cancer)])
 
+			if not(MAX2/MAX<0.05): # one alt 20x larger than the other)
+				return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'Multi-Allelic'
+
+			return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'PASS'
+		
+		elif len(ctypes)==1:
+			BCS = CancerInfo.split('|')[3].split(':')[:4]
+			BCS = [int(i) for i in BCS]
+			BCS[i_ref] = 0 # setting REF to 0 as we only consider ALT
+			MAX = max(BCS)
+			index = np.argmax(BCS)
+			BCS[index] = 0 # removing max to select next "max"
+			MAX2 = max(BCS)
+
+			ALT = 'ACTG'[index]
+			BC = int(CancerInfo.split('|')[3].split(':')[index])
+			CC = int(CancerInfo.split('|')[2].split(':')[index])
+			VAF = round(BC/int(DP),4)
+			MCF= round(CC/int(NC),4)
+
 			FILTER = FILTER.replace('Multi-allelic,','')
 			FILTER = FILTER.replace(',Multi-allelic','')
 			FILTER = FILTER.replace('Multi-allelic','')
 
-			return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'KEEP'
-		
-		elif len(ctypes)==1:
-			if ctypes[0]=='Cancer':
-				BCS = CancerInfo.split('|')[3].split(':')[:4]
-				BCS = [int(i) for i in BCS]
-				BCS[i_ref] = 0 # setting REF to 0 as we only consider ALT
-				MAX = max(BCS)
-				index = np.argmax(BCS)
-				BCS[index] = 0 # removing max to select next "max"
-				MAX2 = max(BCS)
-				if not(MAX2/MAX<0.05): # one alt 20x larger than the other)
-					return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'DELETE'
+			if not(MAX2/MAX<0.05): # one alt 20x larger than the other)
+				return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'Multi-Allelic'
 
-				ALT = 'ACTG'[index]
-				BC = int(CancerInfo.split('|')[3].split(':')[index])
-				CC = int(CancerInfo.split('|')[2].split(':')[index])
-				VAF = round(BC/int(DP),4)
-				MCF= round(CC/int(NC),4)
-
-				FILTER = FILTER.replace('Multi-allelic,','')
-				FILTER = FILTER.replace(',Multi-allelic','')
-				FILTER = FILTER.replace('Multi-allelic','')
-
-				return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'KEEP'
-			else:
-				return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'DELETE'
+			return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'PASS'
 	else:	
-		return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'KEEP'
+		return ALT, FILTER, CTYPES, BC, CC, VAF, MCF,'PASS'
 	
+def BC_CC_filtering(STEP3FILTER,ALT,CancerInfo,min_ac_reads,min_ac_cells):
+	alt_dict = {'A':0, 'C':1, 'T':2, 'G':3}
+	i_alt = alt_dict[ALT[0]]
+	try:
+		CancerInfos = CancerInfo.split('|')
+		BC = CancerInfos[3].split(':')[i_alt]
+		CC = CancerInfos[2].split(':')[i_alt]
+		if int(BC)<min_ac_reads or int(CC)<min_ac_cells:
+			if STEP3FILTER == 'PASS':
+				return 'LowDepth'
+			else:
+				return STEP3FILTER + ',LowDepth'
+		else:
+			return STEP3FILTER
+	except AttributeError:
+		if STEP3FILTER == 'PASS':
+				return 'NoCov'
+		else:
+			return STEP3FILTER + ',NoCov'
+
+
+def BetaBino_filtering(STEP3FILTER,CTYPES,CTYPESFILTER,POS):
+	ctypes = CTYPES.split(',')
+	if len(ctypes) == 1:
+		if CTYPESFILTER in ['Non-Significant','Low-Significance']:
+			if STEP3FILTER == 'PASS':
+				return 'CancerNonSig'
+			else:
+				return STEP3FILTER + ',CancerNonSig'
+		return STEP3FILTER
+	elif len(ctypes) > 1:
+		if ctypes[0] == 'Cancer':
+			i_cancer = 0
+			i_noncancer = 1
+		elif ctypes[1] == 'Cancer':
+			i_cancer = 1
+			i_noncancer = 0
+		if CTYPESFILTER.split(',')[i_cancer] in ['Non-Significant','Low-Significance']:
+			if STEP3FILTER == 'PASS':
+				return 'CancerNonSig'
+			else:
+				return STEP3FILTER + ',CancerNonSig'
+		if CTYPESFILTER.split(',')[i_noncancer] in ['PASS','Low-Significance']:
+			if STEP3FILTER == 'PASS':
+				return 'NonCancerSig'
+			else:
+				return STEP3FILTER + ',NonCancerSig'
+		return STEP3FILTER
+
+
 def tag_clustered_SNVs(df, clust_dist):
-	df2 = df[df['FILTER']=='PASS']
+	df2 = df[df['STEP3FILTER']=='PASS']
 	idx = df2['INDEX']
 	a=[]
 	for i in idx:
@@ -249,13 +300,13 @@ def tag_clustered_SNVs(df, clust_dist):
 				trash.append(':'.join([chr2,pos2,base2]))
 	trash = set(trash)
 	updated_filter= df.apply(lambda x : 
-							   modify_filter(x['INDEX'],x['FILTER'], clust_dist, trash),
+							   modify_filter(x['INDEX'],x['STEP3FILTER'], clust_dist, trash),
 							   axis=1)
 	print(updated_filter)
 	return updated_filter
 
 def modify_filter(INDEX, FILTER, clust_dist, trash):
-	clustered = 'Clust_dist{}'.format(str(clust_dist))
+	clustered = 'Clust_dist_{}'.format(str(clust_dist))
 	if INDEX in trash:
 		if FILTER == 'PASS':
 			return clustered

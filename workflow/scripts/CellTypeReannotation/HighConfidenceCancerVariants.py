@@ -46,9 +46,9 @@ def HCCV_SNV(SNVs,outfile,min_dp,deltaVAF,deltaMCF,clust_dist):
 	input_df['DP_FILTER'] = input_df.apply(lambda x: 
 		DP_filtering(x['Cancer'],x['Non-Cancer'],min_dp), axis=1)
 	input_df = input_df[input_df['DP_FILTER']=='PASS']
+	input_df.to_csv(outfile+'2', sep='\t', index=False,  mode='a')
 
 	#Special case for chrM due to contaminants:
-
 	# Save chrM candidate SNVs to apply specific filters
 	chrm_df = input_df[input_df['#CHROM']=='chrM'].copy()
 	input_df = input_df[input_df['#CHROM']!='chrM']
@@ -77,6 +77,7 @@ def HCCV_SNV(SNVs,outfile,min_dp,deltaVAF,deltaMCF,clust_dist):
 	# Filter 7: PoN filterDelta VAF and MCF filtering
 	input_df['HCCV_FILTER'] = input_df.apply(lambda x: 
 		MCF_filtering(x['Cell_types'],x['VAF'], x['MCF'],deltaVAF,deltaMCF), axis=1)
+	input_df.to_csv(outfile+'3', sep='\t', index=False,  mode='a')
 	input_df = input_df[input_df['HCCV_FILTER']=='PASS']
 
 	# Filter 8: Distance filter
@@ -229,15 +230,18 @@ def MCF_filtering(CTYPES,VAF,MCF,deltaVAFmin,deltaMCFmin):
 			VAFNonCancer = float(VAFs[0])
 			MCFCancer = float(MCFs[1])
 			MCFNonCancer = float(MCFs[0])
-
-		if VAFNonCancer>0.12:
-			return 'Heterozygous'
 		
 		if VAFCancer<0.05: 
 			return 'NonSig'
 
-		# deltaVAF = VAFCancer-VAFNonCancer
+		deltaVAF = VAFCancer-VAFNonCancer
 		deltaMCF = MCFCancer-MCFNonCancer
+
+		if VAFNonCancer>0.1 and deltaVAF<2*deltaVAFmin:
+			return 'Heterozygous'
+		
+		if VAFNonCancer>0.2:
+			return 'Heterozygous'
 
 		# HCCV are variants with high VAF/MCF in cancer and low VAF/MCF in non-cancer cells
 		# if deltaVAF < deltaVAFmin:

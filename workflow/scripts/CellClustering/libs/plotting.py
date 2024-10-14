@@ -64,7 +64,7 @@ def _get_col_order(assignment):
 
 def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
             assignment=np.array([]), metric='correlation', row_cl=True,
-            ctypes=pd.Series()):
+            barcodes=pd.Series()):
 
     data = data_in.copy()
     data_raw = data_raw_in.copy()
@@ -93,7 +93,7 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
                 
         cluster_cols = pd.Series(col_dict, name='clusters', index=col_order)
 
-        ctypes = ctypes.reindex([ctypes.index[i] for i in col_order])
+        barcodes = barcodes.reindex([barcodes.index[i] for i in col_order])
 
         data.columns = np.arange(data_in.shape[1])
         data = data[col_order]
@@ -137,7 +137,7 @@ def plot_raw_data(data_in, data_raw_in=pd.DataFrame(), out_file=None,
     cmap.set_over('green')
     cmap.set_bad('grey')
 
-    col_colors=[ctypes['Cancer_Color'],cluster_cols]
+    col_colors=[barcodes['Cell_Reanno_Colors'],cluster_cols]
 
     cm = sns.clustermap(
         data,

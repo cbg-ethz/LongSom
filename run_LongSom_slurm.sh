@@ -10,7 +10,7 @@ sbatch \
   -e logs/snakelog.err \
 snakemake \
   -s workflow/Snakefile \
-  --configfile workflow/test.yaml \
+  --configfile config/config.yaml \
   --profile profile/ \
   --use-conda \
   --use-singularity \

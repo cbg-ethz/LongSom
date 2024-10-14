@@ -5,7 +5,7 @@ jobs: 500
 cores: 500
 
 default-resources:
-  mem_mb_per_cpu: max(2*input.size_mb, 4096)
+  mem_mb_per_cpu: max(2*input.size_mb, 8192)
   runtime: 240
   slurm_account: "'es_beere'"
   #tmpdir: /cluster/scratch/

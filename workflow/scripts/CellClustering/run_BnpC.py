@@ -55,7 +55,7 @@ def parse_args():
         help='Run single chain in main python thread for debugging with pdb.'
     )
     parser.add_argument(
-        '--ctypes', type=str,
+        '--barcodes', type=str,
         help='Absolute or relative path(s) to input barcode-to-ctype file'
     )
     parser.add_argument(

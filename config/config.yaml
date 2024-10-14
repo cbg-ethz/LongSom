@@ -6,7 +6,7 @@ User:
   output_dir: /path/to/output_dir
   sample_map: /path/to/sample_map.tsv
   cancer_cell_type: HGSOC
-
+  
 # Change if you use a custom reference
 Reference:
   genome: /../ref/GRCh38_gencode_v44_CTAT_lib_Oct292023.plug-n-play/ctat_genome_lib_build_dir/ref_genome.fa
@@ -78,7 +78,7 @@ SNVCalling:
     Min_cell_types: 2
     min_distance: 0
     max_gnomAD_VAF: 0.01
-    deltaVAF: 0.1
+    deltaVAF: 0.05
     deltaMCF: 0.3
     min_ac_reads: 3
     min_ac_cells: 2
@@ -116,7 +116,7 @@ CellClust:
     FN: -1
     estimator: 'posterior'
     pp: [1,1]
-    dpa: [1,1]
+    dpa: [0.001, 5.0]
 
  ### CNA Calling 
 inferCNV:
