@@ -1,5 +1,5 @@
 # LongSom
-A [Snakemake](https://snakemake.github.io/) pipeline for calling somatic SNVs, fusions, and CNAs in high-quality long-read single-cell RNA-seq cancer samples, and infer subclonal structures based on those variants.
+A [Snakemake](https://snakemake.github.io/) workflow for calling somatic SNVs, fusions, and CNAs in high-quality long-read single-cell RNA-seq cancer samples, and infer subclonal structures based on those variants.
 
 LongSom takes a bam file and a barcodes file as input. Before calling variants, it performs a cell types reannotation step for improved results. For more informations about the methods, please read our publication [Dondi et al. 2024](https://www.biorxiv.org/content/10.1101/2024.03.06.583775v1).
 
