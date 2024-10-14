@@ -10,4 +10,5 @@ benchmarks/
 #Large files
 ctat_lr_fusion.v0.13.0.simg
 
+__pycache__
 *test*
