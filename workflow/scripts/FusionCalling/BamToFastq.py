@@ -42,7 +42,7 @@ def bam_to_fastq(bam,fastq):
             f.write(quals + '\n')
 
 def initialize_parser():
-    parser = argparse.ArgumentParser(description='Rename cell types in cancer/non-cancer')
+    parser = argparse.ArgumentParser(description='Convert bam file into a fastq file for CTAT-LR-fusion')
     parser.add_argument('--bam', type=str, default=1, help='User input barcode file', required = True)
     parser.add_argument('--fastq', type=str, default=1, help='Barcode file with redefined cancer/non-cancer celltypes', required = True)
     return (parser)
